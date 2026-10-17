@@ -1,0 +1,54 @@
+import { NavLink, Outlet, useLocation } from 'react-router';
+
+// 下タブ（iPhone）／上メニュー（PC）に並べる画面
+// match：今の URL がこのタブに属するかの判定（レシピ詳細・追加も「レシピ」タブ扱いにする）
+const NAV_ITEMS = [
+  { to: '/',        label: 'レシピ',     icon: '📖', match: (path: string) => path === '/' || path.startsWith('/recipes') },
+  { to: '/todo',    label: '今週作る',   icon: '🗓️', match: (path: string) => path.startsWith('/todo') },
+  { to: '/history', label: '作ったご飯', icon: '🍚', match: (path: string) => path.startsWith('/history') },
+];
+
+/**
+ * 全画面共通の枠
+ * iPhone：画面下に固定のタブバー（親指で届く位置）
+ * PC（md 以上）：画面上に横並びのメニュー
+ */
+const MainLayout = () => {
+  const { pathname } = useLocation();
+
+  return (
+    <div className="min-h-dvh text-stone-800 md:flex md:flex-col">
+      {/* 本文。iPhone では下タブに隠れないよう下に余白を取る */}
+      <main className="px-4 pt-6 pb-28 md:order-2 md:mx-auto md:w-full md:max-w-4xl md:px-8 md:pb-10">
+        <Outlet />
+      </main>
+
+      <nav
+        className="fixed inset-x-3 bottom-3 rounded-3xl bg-white/90 shadow-lg shadow-stone-900/10 backdrop-blur
+                   mb-[env(safe-area-inset-bottom)]
+                   md:static md:inset-auto md:order-1 md:mb-0 md:rounded-none md:bg-cream/90 md:shadow-none"
+      >
+        <ul className="mx-auto flex max-w-4xl gap-1 p-1.5 md:justify-start md:gap-2 md:px-8 md:py-3">
+          {NAV_ITEMS.map(item => {
+            const active = item.match(pathname);
+            return (
+              <li key={item.to} className="flex-1 md:flex-none">
+                <NavLink
+                  to={item.to}
+                  className={`flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition-colors
+                    md:min-h-10 md:flex-row md:gap-1.5 md:rounded-full md:px-4 md:text-sm
+                    ${active ? 'bg-brand/10 font-bold text-brand' : 'text-stone-500'}`}
+                >
+                  <span className="text-xl md:text-base">{item.icon}</span>
+                  {item.label}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+  );
+};
+
+export default MainLayout;

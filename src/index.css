@@ -3,6 +3,8 @@
 /* アプリ共通の色。bg-brand / text-brand のようにクラスで使える */
 @theme {
   --color-brand: #e8743b;
+  /* 背景の薄いクリーム色（カードは白のまま、背景だけ温かみを出す） */
+  --color-cream: #fdf8ec;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
 }
 
@@ -11,6 +13,7 @@
 }
 
 body {
+  background-color: var(--color-cream);
   /* iPhone のノッチ・ホームバーに重ならないよう余白を取る（Tailwind では書きにくいので素の CSS で） */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);

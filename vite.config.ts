@@ -21,7 +21,7 @@ export default defineConfig({
         start_url: '/',
         // URLバーを消してネイティブアプリのように表示する
         display: 'standalone',
-        background_color: '#ffffff',
+        background_color: '#fdf8ec',
         theme_color: '#e8743b',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
