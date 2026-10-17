@@ -136,12 +136,20 @@ SSAM（SES営業支援システム）を**1人で設計・構築・1年以上運
 
 ## 次にやること
 
-1. 奥さんに要望をヒアリング（川名さん側のタスク）
-2. 要件を最小構成に絞る
-3. ~~プロジェクトの雛形作成（React + TypeScript + PWA設定）~~ → 2026-10-17 完了（下記「9. 雛形」参照）
-4. Supabase等のバックエンド選定（料金は一次情報で確認）
+### 完了
+- ~~プロジェクトの雛形作成（React + TypeScript + PWA設定）~~ → 2026-10-17（下記「9. 雛形」参照）
+- ~~環境・外部サービスの選定~~ → 2026-10-17。結論と理由は [REQUIREMENTS.md](REQUIREMENTS.md)
+  （GitHub / Cloudflare Pages / Supabase / Supabase Edge Functions / Gemini 無料枠）
+- ~~GitHub リポジトリ作成~~ → 2026-10-17。https://github.com/tomoyakawana/RECIPE （Private・個人アカウント）
 
-> 環境まわりの要件と決定ログは [REQUIREMENTS.md](REQUIREMENTS.md) に記録している（2026-10-17〜）。
+### これから
+1. Mac で `npm install` → `npm run build` が通ることを確認
+2. Cloudflare Pages と GitHub を連携して初回デプロイ → iPhone のホーム画面に追加できるか確認
+3. Supabase プロジェクト作成（1週間使わないと一時停止されるので、使い始める直前に作る）
+4. 画面づくり（どの機能から作るかは川名さんが決める）
+
+> 奥さんへの要望ヒアリングは**必須にしない**（2026-10-17 川名さん判断：遊びなので）。
+> 奥さんのための機能を作るときに、必要なら聞く程度でよい。
 
 ---
 
