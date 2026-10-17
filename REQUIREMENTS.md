@@ -138,6 +138,7 @@
 |---|---|---|---|
 | 2026-10-17 | 1. ソース管理 | GitHub | 推奨案どおり。ホスティングの自動デプロイと連携できる |
 | 2026-10-17 | 2. ホスティング | Cloudflare Pages | ビルド500回/月で足りる。プレビューデプロイがある。Netlify はデプロイでクレジットを消費して枠が尽きやすく、GitHub Pages はプレビューデプロイがないため外した |
+| 2026-10-17 | 2. ホスティング（補足） | 新規作成画面の「Connect GitHub」（Workers）ではなく、「Continue to Pages」（画面上の表記は legacy）で作成。URL は https://recipe-dph.pages.dev | Vite のビルド結果を置くだけなら、Pages の方が設定ファイルが要らず、プレビューデプロイも標準で付く。Pages の廃止告知は見当たらない（[公式の移行ガイド](https://developers.cloudflare.com/workers/static-assets/migration-guides/migrate-from-pages/)を確認）。必要になったら Workers へ移行する |
 | 2026-10-17 | 3. DB・認証・画像保存 | Supabase | PostgreSQL の経験が活きる。認証・Storage が同じサービスにまとまる |
 | 2026-10-17 | 4. APIキーを隠すサーバー処理 | Supabase Edge Functions | TypeScript で書ける。Supabase の認証と組み合わせて、ログインした2人だけが呼べるようにしやすい |
 | 2026-10-17 | 5. AI | Gemini API 無料枠 | SSAM で使い慣れている |
