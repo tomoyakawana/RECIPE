@@ -1,0 +1,26 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  color: #222;
+  background-color: #fff;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  /* iPhone のノッチ・ホームバーに重ならないよう余白を取る */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.app {
+  padding: 24px 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
