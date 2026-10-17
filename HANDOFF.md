@@ -177,3 +177,26 @@ Supabase、ルーティング、UI ライブラリ、状態管理。必要にな
 ### 注意
 - **`npm install` は Mac で実行すること。** Claude の作業環境（Linux VM）で入れた node_modules は Mac では動かない（esbuild/rolldown 等のネイティブバイナリが OS 別のため）
 - PWA の Service Worker は `npm run dev` では動かない。確認は `npm run build` → `npm run preview`
+
+---
+
+## 10. レスポンシブ方針・CSS（2026-10-17 決定）
+
+**対象は PC と iPhone の両方**（Android は引き続き対象外）。
+
+### 方針
+| 項目 | 決定 | 理由 |
+|---|---|---|
+| 基本の考え方 | **モバイルファースト**。iPhone 幅を基本のスタイルにして、`md:`（= `min-width`）で PC 向けを足す | SSAM はデスクトップ前提の土台にあとからスマホ対応を足そうとして崩れた。最初からスマホ基準で作れば同じことは起きない |
+| ブレークポイント | まずは **768px（Tailwind の `md:`）の1つだけ** | 2画面幅しか想定していない。必要になったら増やす |
+| 一覧の表示 | テーブルではなく**カード形式**。PC では列数を増やす | 狭い幅で横スクロールさせない |
+| 操作 | ホバー前提の UI は作らない。タップ領域は **44px 以上** | タッチ操作が主。44pt は Apple の推奨値 |
+| 確認方法 | PC ブラウザの開発者ツール（iPhone サイズ表示）＋ iPhone 実機（LAN 経由） | — |
+
+### CSS：Tailwind CSS v4
+| 項目 | 内容 |
+|---|---|
+| 採用 | `tailwindcss` 4.3.3 ＋ `@tailwindcss/vite` 4.3.3（Vite 8 対応を peerDependencies で確認） |
+| 理由 | SSAM で使い慣れている。`md:` などでレスポンシブを HTML 側に書ける。追加費用なし |
+| SSAM（v3）との違い | `tailwind.config.js` / `postcss.config.js` は不要。CSS に `@import "tailwindcss";` の1行。テーマのカスタマイズは CSS の `@theme { }` に書く。クラスの書き方はほぼ同じ |
+| Tailwind に任せないもの | `env(safe-area-inset-*)` のノッチ回避余白は `index.css` に素の CSS で残す |
