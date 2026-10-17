@@ -1,11 +1,14 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Tailwind CSS v4（設定ファイル不要。index.css の @import で読み込む）
+    tailwindcss(),
     VitePWA({
       // 新しいバージョンをデプロイしたら Service Worker を自動で更新する
       registerType: 'autoUpdate',
@@ -33,4 +36,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+});
