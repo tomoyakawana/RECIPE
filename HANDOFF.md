@@ -170,7 +170,7 @@ SSAM（SES営業支援システム）を**1人で設計・構築・1年以上運
 確認時の主なバージョン：vite 8.3.4 / React 19.2 / TypeScript 6.0。
 
 ### iOS 向けに入れたもの
-- `manifest`：`display: standalone`、日本語名「レシピ」、テーマ色 `#e8743b`
+- `manifest`：`display: standalone`、日本語名「なに食べたい？」（2026-10-18 に「レシピ」から変更）、テーマ色 `#e8743b`
 - `index.html`：`apple-touch-icon`、`apple-mobile-web-app-*` の meta、`viewport-fit=cover`
 - `index.css`：`env(safe-area-inset-*)` でノッチ・ホームバーを避ける余白
 - アイコン（192 / 512 / apple-touch-icon 180）は**仮**。お椀のシンプルな図形

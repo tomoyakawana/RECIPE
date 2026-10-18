@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'レシピ',
-        short_name: 'レシピ',
+        name: 'なに食べたい？',
+        short_name: 'なに食べたい？',
         description: '夫婦で共有する料理レシピアプリ',
         lang: 'ja',
         start_url: '/',
