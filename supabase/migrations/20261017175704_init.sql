@@ -313,6 +313,43 @@ $$;
 
 
 -- ---------------------------------------------------------
+-- 権限（GRANT）
+-- 2026-05-30 以降の新しい Supabase プロジェクトでは、public のテーブルに権限が自動で付かない。
+-- テーブルごとに明示的に付ける（付けないと supabase-js から一切読めない）。
+-- 参考：https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically
+--
+-- anon（未ログイン）には何も付けない。authenticated（ログイン済み）に必要な分だけ付ける。
+-- service_role はサーバー側（Edge Functions など）用。
+-- どの行に触れるかは、この後の RLS で絞る（GRANT と RLS は別の層）。
+-- ---------------------------------------------------------
+grant select, insert, update, delete on
+  public.recipes,
+  public.recipe_ingredients,
+  public.recipe_steps,
+  public.todo_items,
+  public.cook_logs,
+  public.shopping_items
+to authenticated, service_role;
+
+-- 共有メモは1行固定なので、読み取りと更新だけ
+grant select, update on public.shared_notes to authenticated;
+grant select, insert, update, delete on public.shared_notes to service_role;
+
+-- 関数は PostgreSQL の既定で誰でも（PUBLIC）実行できるので、いったん外してから付け直す
+revoke execute on function
+  public.mark_cooked(uuid),
+  public.save_recipe(uuid, text, integer, integer, text[], text, jsonb, text[]),
+  public.add_todo_ingredients_to_shopping()
+from public, anon;
+
+grant execute on function
+  public.mark_cooked(uuid),
+  public.save_recipe(uuid, text, integer, integer, text[], text, jsonb, text[]),
+  public.add_todo_ingredients_to_shopping()
+to authenticated, service_role;
+
+
+-- ---------------------------------------------------------
 -- RLS（行レベルセキュリティ）
 -- 未ログイン（anon）は何もできない。ログイン済み（authenticated）は全件読み書きできる。
 -- 共有メモだけは1行固定なので、読むことと書き換えることだけ許す

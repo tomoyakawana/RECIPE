@@ -318,6 +318,17 @@ SSAM は前半が `xxx_table`、後半が接尾辞なしで混在してしまっ
 | 共有メモは1行固定（`check (id = 1)`、RLS で更新のみ許可） | 冷蔵庫のホワイトボードのような1枚のメモ |
 | 作成者・作成日時・更新日時を各テーブルに持つ（`created_by` の既定値は `auth.uid()`、`updated_at` はトリガーで自動更新） | 画面には出ないが、誰がいつ変えたか追えるように |
 
+### 権限（GRANT）：Supabase の仕様変更への対応（2026-10-18）
+- **2026-05-30 以降に作った Supabase プロジェクトでは、`public` のテーブルに権限が自動で付かない**（既存プロジェクトも 2026-10-30 から同じ扱い）。テーブルごとに `GRANT` を明示的に書く必要がある。付けないと supabase-js から一切読めない
+  - 出典：[Supabase 公式 changelog](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically)
+- 対応：マイグレーションに `GRANT` を追加
+  - `authenticated`（ログイン済み）と `service_role`（サーバー側）に、各テーブルの select / insert / update / delete
+  - 共有メモは `authenticated` に select / update だけ
+  - `anon`（未ログイン）には何も付けない
+  - DB 関数は PostgreSQL の既定で誰でも実行できるので、`public` と `anon` から実行権限を外し、`authenticated` と `service_role` にだけ付ける
+- **GRANT（そのテーブルに触れるか）と RLS（どの行に触れるか）の二段構え**にしている
+- プロジェクト作成時の「Automatically expose new tables」は**外したまま**にする（明示的な GRANT で足りる。外す方が安全）
+
 ### RLS（行レベルセキュリティ）
 - 未ログイン（`anon`）は何もできない
 - ログイン済み（`authenticated`）は全データを読み書きできる（利用者は夫婦2人だけで、新規登録は閉じるため）
@@ -326,4 +337,5 @@ SSAM は前半が `xxx_table`、後半が接尾辞なしで混在してしまっ
 ### 検証の方法と限界
 - Docker の PostgreSQL 17 にマイグレーションを流し、テスト SQL で各機能・制約・RLS を確認した（テスト SQL はリポジトリには入れていない）
 - `auth.users` / `auth.uid()` / `anon` / `authenticated` ロールは**検証用の代用品**。本物の Supabase とは同じではない
-- **本物の Supabase に流すときに、もう一度確認すること**：新しいテーブルへの既定の権限付与（最近変わったと聞いているが未確認）、`auth.uid()` の動作、RLS の効き方
+- 権限については、新しい Supabase を再現した検証（テーブルへの自動 GRANT なし）でも確認した。未ログインはテーブル・関数とも権限の段階で拒否されることを確認済み
+- **本物の Supabase に流すときに、もう一度確認すること**：`auth.uid()` の動作、RLS の効き方、Security Advisor の警告
