@@ -240,3 +240,17 @@ Supabase、ルーティング、UI ライブラリ、状態管理。必要にな
 - 一覧は写真が主役のカード（iPhone 2列 / PC 3列）。写真がない間は、タグに合わせた絵文字＋グラデーションを仮の写真にする
 - iPhone は画面下に浮いたタブバー、PC は上に横並びのメニュー
 - iOS の Liquid Glass は Web では完全には再現できない（ネイティブは SwiftUI の `.glassEffect()`）。今は入れない
+
+---
+
+## 12. DB の命名規則（2026-10-17 決定）
+
+| 対象 | ルール | 例 |
+|---|---|---|
+| テーブル | **複数形の snake_case、接尾辞なし** | `recipes`, `cook_logs`, `recipe_ingredients` |
+| ビュー（作る場合） | `_view` を付けてテーブルと区別する | `recipe_summary_view` |
+| 列 | snake_case。外部キーは `<単数形>_id` | `recipe_id`, `created_by` |
+| 日時 / 日付 | 日時は `_at`（timestamptz）、日付は `_on`（date） | `created_at`, `cooked_on` |
+
+**理由：** PostgreSQL / Supabase で一般的な書き方で、supabase-js でも `from('recipes')` と自然に読める。
+SSAM は前半が `xxx_table`、後半が接尾辞なしで混在してしまったので、今回は最初に決めて統一する。
