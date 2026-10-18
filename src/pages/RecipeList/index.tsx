@@ -23,8 +23,9 @@ const RecipeListPage = () => {
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
 
-  // 今週作るに入っているレシピの id（ボタンの表示切り替え用）
-  const todoRecipeIds = new Set(todo.map(t => t.recipeId));
+  // 「日付未定」で今週作るに入っているレシピの id（ボタンの表示切り替え用）
+  // 日付が決まっているものは別の日にもう一度入れられるので、未定のものだけ見る
+  const undatedRecipeIds = new Set(todo.filter(t => !t.plannedOn).map(t => t.recipeId));
 
   return (
     <>
@@ -98,7 +99,7 @@ const RecipeListPage = () => {
                 {r.title}
               </Link>
               <p className="mt-1 text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
-              {todoRecipeIds.has(r.id) ? (
+              {undatedRecipeIds.has(r.id) ? (
                 <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
                   ✓ 今週作る
                 </p>

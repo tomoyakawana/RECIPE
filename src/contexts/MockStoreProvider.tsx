@@ -26,7 +26,8 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
 
   const addToTodo = useCallback((recipeId: string) => {
     setTodo(prev =>
-      prev.some(t => t.recipeId === recipeId)
+      // 同じレシピの「日付未定」がすでにあれば増やさない（日付が決まっているものは別扱い）
+      prev.some(t => t.recipeId === recipeId && !t.plannedOn)
         ? prev
         : [...prev, { id: newId('t'), recipeId, addedOn: todayYmd() }],
     );
@@ -36,11 +37,24 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
     setTodo(prev => prev.filter(t => t.id !== todoId));
   }, []);
 
+  const setPlannedOn = useCallback((todoId: string, plannedOn: string | undefined) => {
+    const item = todo.find(t => t.id === todoId);
+    if (!item) return false;
+    // 同じレシピ・同じ日付（未定同士も含む）がほかにあれば重複になるので変更しない（DB の unique と同じルール）
+    const duplicated = todo.some(t => t.id !== todoId && t.recipeId === item.recipeId && t.plannedOn === plannedOn);
+    if (duplicated) return false;
+    setTodo(prev => prev.map(t => (t.id === todoId ? { ...t, plannedOn } : t)));
+    return true;
+  }, [todo]);
+
   const markCooked = useCallback((todoId: string) => {
     const item = todo.find(t => t.id === todoId);
     if (!item) return;
+    const today = todayYmd();
+    // 予定日が今日以前ならその日に作ったとみなす（押し忘れ対策）。未来・未定なら今日
+    const cookedOn = item.plannedOn && item.plannedOn <= today ? item.plannedOn : today;
     setTodo(prev => prev.filter(t => t.id !== todoId));
-    setHistory(prev => [{ id: newId('h'), recipeId: item.recipeId, cookedOn: todayYmd() }, ...prev]);
+    setHistory(prev => [{ id: newId('h'), recipeId: item.recipeId, cookedOn }, ...prev]);
   }, [todo]);
 
   const addRecipe = useCallback((input: RecipeInput) => {
@@ -55,8 +69,8 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value: MockStore = useMemo(
-    () => ({ recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe, updateRecipe }),
-    [recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe, updateRecipe],
+    () => ({ recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe }),
+    [recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe],
   );
 
   return <MockStoreContext.Provider value={value}>{children}</MockStoreContext.Provider>;

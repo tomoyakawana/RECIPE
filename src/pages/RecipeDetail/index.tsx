@@ -19,7 +19,8 @@ const RecipeDetailPage = () => {
     );
   }
 
-  const inTodo = todo.some(t => t.recipeId === recipe.id);
+  // 日付未定で入っていれば「追加済み」。日付が決まっているものとは別に、もう一度追加できる
+  const inTodo = todo.some(t => t.recipeId === recipe.id && !t.plannedOn);
   // このレシピを作った記録（新しい順）
   const cookedDates = history
     .filter(h => h.recipeId === recipe.id)
@@ -126,7 +127,7 @@ const RecipeDetailPage = () => {
           onClick={() => addToTodo(recipe.id)}
           className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
-          {inTodo ? '✓ 今週作るに追加済み' : '＋ 今週作るに追加'}
+          {inTodo ? '✓ 今週作るに追加済み（日付未定）' : '＋ 今週作るに追加'}
         </button>
       </div>
     </article>
