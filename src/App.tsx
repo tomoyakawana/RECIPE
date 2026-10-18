@@ -11,6 +11,9 @@ import RecipeFormPage from './pages/RecipeForm';
 // 今週作る
 import TodoPage from './pages/Todo';
 
+// メモ（買い物リスト・共有メモ）
+import MemoPage from './pages/Memo';
+
 // 作ったご飯（履歴）
 import HistoryPage from './pages/History';
 
@@ -26,6 +29,7 @@ const App = () => {
             <Route path="/recipes/:id" element={<RecipeDetailPage />} />
             <Route path="/recipes/:id/edit" element={<RecipeFormPage />} />
             <Route path="/todo" element={<TodoPage />} />
+            <Route path="/memo" element={<MemoPage />} />
             <Route path="/history" element={<HistoryPage />} />
           </Route>
         </Routes>

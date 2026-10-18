@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import type { HistoryEntry } from '../types/history';
 import type { Recipe, RecipeInput } from '../types/recipe';
+import type { ShoppingItem } from '../types/shopping';
 import type { TodoItem } from '../types/todo';
 
 /**
@@ -13,6 +14,9 @@ export type MockStore = {
   recipes : Recipe[];
   todo    : TodoItem[];
   history : HistoryEntry[];
+  shopping: ShoppingItem[];
+  // 夫婦で共有するメモ（1枚）
+  note    : string;
   // お気に入りの ON/OFF
   toggleFavorite: (recipeId: string) => void;
   // 「今週作る」に日付未定で追加（同じレシピの日付未定がすでにあれば何もしない）
@@ -28,6 +32,17 @@ export type MockStore = {
   addRecipe     : (input: RecipeInput) => string;
   // レシピの内容を書き換える（お気に入りはそのまま）
   updateRecipe  : (recipeId: string, input: RecipeInput) => void;
+
+  // ---- 買い物・メモ ----
+  addShoppingItem     : (name: string, amount?: string) => void;
+  toggleShoppingItem  : (itemId: string) => void;
+  removeShoppingItem  : (itemId: string) => void;
+  // チェック済み（買ったもの）をまとめて消す
+  clearCheckedShopping: () => void;
+  // 今週作るに入っているレシピの材料を、買い物リストに追加する。追加した件数を返す
+  // 同じレシピの同じ材料が、まだ買っていない状態で入っていれば重ねて入れない
+  addTodoIngredients  : () => number;
+  setNote             : (note: string) => void;
 };
 
 // Provider の外で使われたら null になる（useMockStore でチェックする）

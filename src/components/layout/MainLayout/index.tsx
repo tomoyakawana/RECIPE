@@ -5,6 +5,7 @@ import { NavLink, Outlet, useLocation } from 'react-router';
 const NAV_ITEMS = [
   { to: '/',        label: 'レシピ',     icon: '📖', match: (path: string) => path === '/' || path.startsWith('/recipes') },
   { to: '/todo',    label: '今週作る',   icon: '🗓️', match: (path: string) => path.startsWith('/todo') },
+  { to: '/memo',    label: 'メモ',       icon: '📝', match: (path: string) => path.startsWith('/memo') },
   { to: '/history', label: '作ったご飯', icon: '🍚', match: (path: string) => path.startsWith('/history') },
 ];
 
