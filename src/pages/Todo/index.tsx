@@ -47,9 +47,13 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
     <Link to={`/recipes/${recipe.id}`} className="shrink-0">
       <ImagePlaceholder tags={recipe.tags} className="size-18 rounded-xl" emojiSize="text-3xl" />
     </Link>
-    <div className="flex min-w-0 flex-1 flex-col justify-between">
+    <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
       <div className="flex items-start gap-1">
-        <Link to={`/recipes/${recipe.id}`} className="min-w-0 flex-1 truncate pt-1 font-bold">{recipe.title}</Link>
+        <div className="min-w-0 flex-1 pt-1">
+          <Link to={`/recipes/${recipe.id}`} className="block truncate font-bold">{recipe.title}</Link>
+          {/* レシピのひとことメモ（作るときに思い出せるように、1行だけ小さく） */}
+          {recipe.note && <p className="truncate text-xs text-stone-500">💬 {recipe.note}</p>}
+        </div>
         <button
           type="button"
           onClick={onRemove}

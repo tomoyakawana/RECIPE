@@ -22,6 +22,7 @@ export const MOCK_RECIPES: Recipe[] = [
     ],
     tags: ['和食', '豚肉'],
     isFavorite: true,
+    note: '玉ねぎ多めが好評。生姜はチューブでもOK',
   },
   {
     id: 'r2',
@@ -51,6 +52,7 @@ export const MOCK_RECIPES: Recipe[] = [
     steps: ['野菜を切る。', '肉と野菜を炒める。', '調味料と水を入れて20分煮る。'],
     tags: ['和食', '牛肉', '作り置き'],
     isFavorite: true,
+    note: 'しらたきを入れると◎。翌日の方がおいしい',
   },
   {
     id: 'r4',

@@ -30,8 +30,10 @@ export type MockStore = {
   markCooked    : (todoId: string) => void;
   // レシピを追加して、採番した id を返す
   addRecipe     : (input: RecipeInput) => string;
-  // レシピの内容を書き換える（お気に入りはそのまま）
+  // レシピの内容を書き換える（お気に入りとひとことメモはそのまま）
   updateRecipe  : (recipeId: string, input: RecipeInput) => void;
+  // ひとことメモを書き換える（空文字なら消す）
+  setRecipeNote : (recipeId: string, note: string) => void;
 
   // ---- 買い物・メモ ----
   addShoppingItem     : (name: string, amount?: string) => void;

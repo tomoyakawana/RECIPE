@@ -1,13 +1,69 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import { useMockStore } from '../../hooks/useMockStore';
 import { fmtYmd } from '../../utils/date';
 
+/* ---- ひとことメモ（タップしてその場で書ける） ---- */
+const RecipeNote = ({ note, onSave }: { note?: string; onSave: (v: string) => void }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft]     = useState('');
+
+  const startEdit = () => {
+    setDraft(note ?? '');
+    setEditing(true);
+  };
+
+  const save = () => {
+    onSave(draft);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="mt-3 rounded-2xl bg-amber-50 p-3">
+        <textarea
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          autoFocus
+          rows={2}
+          placeholder="例：玉ねぎ多めが好き、辛さ控えめで"
+          // iOS の自動ズームを避けるため text-base（16px）
+          className="w-full resize-none rounded-xl border border-amber-200 bg-white p-2 text-base outline-none focus:ring-2 focus:ring-brand/40"
+        />
+        <div className="mt-2 flex justify-end gap-2">
+          <button type="button" onClick={() => setEditing(false)} className="min-h-9 px-3 text-sm text-stone-500">
+            キャンセル
+          </button>
+          <button type="button" onClick={save} className="min-h-9 rounded-full bg-brand px-4 text-sm font-bold text-white">
+            保存
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={startEdit}
+      className={`mt-3 flex w-full items-start gap-2 rounded-2xl px-3 py-2.5 text-left text-sm ${
+        note ? 'bg-amber-50 text-stone-700' : 'border border-dashed border-stone-300 text-stone-400'
+      }`}
+    >
+      <span>💬</span>
+      {/* whitespace-pre-wrap：改行をそのまま表示する */}
+      <span className="flex-1 whitespace-pre-wrap">{note ?? 'ひとことメモ（例：玉ねぎ多め）'}</span>
+      {note && <span className="shrink-0 text-xs text-stone-400">編集</span>}
+    </button>
+  );
+};
+
 const RecipeDetailPage = () => {
   // URL の /recipes/:id の :id 部分。見つからない可能性もあるので型は string | undefined
   const { id } = useParams();
   const navigate = useNavigate();
-  const { recipes, todo, history, toggleFavorite, addToTodo } = useMockStore();
+  const { recipes, todo, history, toggleFavorite, addToTodo, setRecipeNote } = useMockStore();
 
   const recipe = recipes.find(r => r.id === id);
   if (!recipe) {
@@ -66,6 +122,9 @@ const RecipeDetailPage = () => {
           <span key={t} className="rounded-full bg-white px-3 py-1 text-xs text-stone-600 shadow-sm shadow-stone-900/5">#{t}</span>
         ))}
       </div>
+
+      {/* key：別のレシピに移ったとき、編集中の状態を持ち越さないようにする */}
+      <RecipeNote key={recipe.id} note={recipe.note} onSave={v => setRecipeNote(recipe.id, v)} />
 
       {/* 数字の情報をタイルで */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">

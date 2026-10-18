@@ -68,8 +68,12 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateRecipe = useCallback((recipeId: string, input: RecipeInput) => {
-    // id と isFavorite は元のまま、それ以外をフォームの内容で上書き
-    setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...input, id: r.id, isFavorite: r.isFavorite } : r)));
+    // id・isFavorite・note は元のまま、それ以外をフォームの内容で上書き
+    setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...input, id: r.id, isFavorite: r.isFavorite, note: r.note } : r)));
+  }, []);
+
+  const setRecipeNote = useCallback((recipeId: string, note: string) => {
+    setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...r, note: note.trim() || undefined } : r)));
   }, []);
 
   // ---- 買い物・メモ ----
@@ -108,12 +112,12 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   const value: MockStore = useMemo(
     () => ({
       recipes, todo, history, shopping, note,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe,
+      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
       addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
     }),
     [
       recipes, todo, history, shopping, note,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe,
+      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
       addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
     ],
   );

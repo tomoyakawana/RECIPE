@@ -24,11 +24,13 @@ export type Recipe = {
   isFavorite  : boolean;
   // 参考にしたサイトや本など
   sourceUrl?  : string;
+  // ひとことメモ（「玉ねぎ多めが好き」など、作るときのコツや好み）。夫婦で共通
+  note?       : string;
 };
 
 /**
  * 追加・編集フォームから渡す内容
- * `Omit<Recipe, 'id' | 'isFavorite'>` は「Recipe から id と isFavorite を除いた型」。
- * id は保存時に採番し、お気に入りはフォームでは扱わないため。
+ * `Omit<Recipe, 'id' | 'isFavorite' | 'note'>` は「Recipe から id・isFavorite・note を除いた型」。
+ * id は保存時に採番し、お気に入りとひとことメモは詳細画面で直接変えるので、フォームでは扱わない。
  */
-export type RecipeInput = Omit<Recipe, 'id' | 'isFavorite'>;
+export type RecipeInput = Omit<Recipe, 'id' | 'isFavorite' | 'note'>;
