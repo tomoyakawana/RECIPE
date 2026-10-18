@@ -339,3 +339,50 @@ SSAM は前半が `xxx_table`、後半が接尾辞なしで混在してしまっ
 - `auth.users` / `auth.uid()` / `anon` / `authenticated` ロールは**検証用の代用品**。本物の Supabase とは同じではない
 - 権限については、新しい Supabase を再現した検証（テーブルへの自動 GRANT なし）でも確認した。未ログインはテーブル・関数とも権限の段階で拒否されることを確認済み
 - **本物の Supabase に流すときに、もう一度確認すること**：`auth.uid()` の動作、RLS の効き方、Security Advisor の警告
+
+---
+
+## 14. Supabase の構築（2026-10-18）
+
+### プロジェクト
+| 項目 | 内容 |
+|---|---|
+| プロジェクト名 | WhatsEat |
+| リージョン | **Northeast Asia (Tokyo)**（`ap-northeast-1`） |
+| PostgreSQL | 17 |
+| 「Automatically expose new tables」 | 外したまま（権限はマイグレーションの GRANT で明示的に付ける） |
+
+**リージョンの注意：** 最初は誤って `ap-south-1`（ムンバイ）で作ってしまい、DB が空のうちに削除して作り直した。リージョンは**作成後に変えられない**。リストの中で `ap-northeast-1` を選ぶこと。
+
+### Supabase CLI
+- **npm の devDependency として入れている**（`supabase` 2.121.0）。実行は `npx supabase ...`
+- 理由：Homebrew（`brew install supabase/tap/supabase`）で入れようとしたところ、Mac の Command Line Tools が macOS 27 に対応しておらず失敗した。npm 版は Mac 用の実行ファイルが直接入るので Command Line Tools を使わない。バージョンが `package.json` に残り、別の PC でも `npm install` でそろう利点もある
+- Command Line Tools の更新は、Supabase とは関係なく Mac のメンテナンスとして別途やっておくとよい
+- `supabase init` で作った `supabase/config.toml` はローカル開発用の設定。本番の設定（認証など）には自動では反映されない
+
+### マイグレーションの反映手順
+```bash
+npx supabase login            # 初回のみ（ブラウザで認証）
+npx supabase link             # 初回のみ（プロジェクトを選び、DB のパスワードを入力）
+npx supabase db push --dry-run   # 何が反映されるか確認（DB は変更しない）
+npx supabase db push             # 反映
+npx supabase migration list      # ローカルと Supabase の適用状況を比べる
+```
+- **コミット済みのマイグレーションだけを流す**（git の履歴と DB の中身をずらさないため）
+- Supabase のダッシュボードで直接スキーマを変えない（`db push` が同期エラーになる。変更は必ずマイグレーションで）
+- 新しいマイグレーションは `npx supabase migration new <名前>` で作る（日時付きのファイル名になる）
+
+### 反映後の確認（2026-10-18、`npx supabase db query --linked` と `db advisors` で確認）
+- テーブル7つすべて作成済み、RLS もすべて有効、ポリシー8つ、共有メモの初期行あり
+- 未ログイン（anon）は読み書き不可、DB 関数も実行不可
+- **Security Advisor：0件**
+- Performance Advisor：INFO が11件。今は対応しない
+  - 作成者の列（`created_by` など）の外部キーにインデックスがない（6件）：その列で検索しない。利用者は2人なので影響なし
+  - インデックスが未使用（5件）：DB が空で一度も検索していないため
+
+### 不要な権限の整理（2つ目のマイグレーション）
+- 初期スキーマを流した後、`anon` と `authenticated` に **TRUNCATE / REFERENCES / TRIGGER / MAINTAIN** が付いていることに気づいた。自分で付けたものではなく、Supabase の `postgres` ロールの既定値（`pg_default_acl` で `anon=Dxtm` を確認）から来ていた
+  - TRUNCATE は **RLS を無視して全行を消せる**。Data API は TRUNCATE に対応していないのでアプリ経由で悪用される心配は低いが、使わない権限は外しておく
+  - MAINTAIN は PostgreSQL 17 で追加された権限（LOCK TABLE、VACUUM など）
+- `20261018115231_revoke_unused_table_privileges.sql` で、今あるテーブルから外し、今後作るテーブルにも付かないよう既定値を変えた（`service_role` は対象外）
+- Docker の PostgreSQL で Supabase と同じ既定値を再現して検証済み：外れること、今後のテーブルにも付かないこと、アプリの操作が壊れないこと
