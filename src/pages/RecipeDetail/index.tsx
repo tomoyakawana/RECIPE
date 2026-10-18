@@ -51,7 +51,15 @@ const RecipeDetailPage = () => {
         </button>
       </div>
 
-      <h1 className="text-2xl font-extrabold tracking-tight">{recipe.title}</h1>
+      <div className="flex items-start gap-2">
+        <h1 className="flex-1 text-2xl font-extrabold tracking-tight">{recipe.title}</h1>
+        <Link
+          to={`/recipes/${recipe.id}/edit`}
+          className="flex min-h-9 shrink-0 items-center rounded-full bg-white px-3 text-sm text-stone-600 shadow-sm shadow-stone-900/5"
+        >
+          ✏️ 編集
+        </Link>
+      </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {recipe.tags.map(t => (
           <span key={t} className="rounded-full bg-white px-3 py-1 text-xs text-stone-600 shadow-sm shadow-stone-900/5">#{t}</span>

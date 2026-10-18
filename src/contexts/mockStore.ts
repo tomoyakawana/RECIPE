@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 import type { HistoryEntry } from '../types/history';
-import type { Recipe } from '../types/recipe';
+import type { Recipe, RecipeInput } from '../types/recipe';
 import type { TodoItem } from '../types/todo';
 
 /**
@@ -21,7 +21,9 @@ export type MockStore = {
   // 「作った！」→ 今週作るから外して、履歴に今日の日付で追加
   markCooked    : (todoId: string) => void;
   // レシピを追加して、採番した id を返す
-  addRecipe     : (recipe: Omit<Recipe, 'id'>) => string;
+  addRecipe     : (input: RecipeInput) => string;
+  // レシピの内容を書き換える（お気に入りはそのまま）
+  updateRecipe  : (recipeId: string, input: RecipeInput) => void;
 };
 
 // Provider の外で使われたら null になる（useMockStore でチェックする）

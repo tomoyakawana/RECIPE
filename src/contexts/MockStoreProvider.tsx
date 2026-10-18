@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { MOCK_HISTORY } from '../mocks/history';
 import { MOCK_RECIPES } from '../mocks/recipes';
 import { MOCK_TODO } from '../mocks/todo';
-import type { Recipe } from '../types/recipe';
+import type { Recipe, RecipeInput } from '../types/recipe';
 import { todayYmd } from '../utils/date';
 import { MockStoreContext, type MockStore } from './mockStore';
 
@@ -43,15 +43,20 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
     setHistory(prev => [{ id: newId('h'), recipeId: item.recipeId, cookedOn: todayYmd() }, ...prev]);
   }, [todo]);
 
-  const addRecipe = useCallback((recipe: Omit<Recipe, 'id'>) => {
+  const addRecipe = useCallback((input: RecipeInput) => {
     const id = newId('r');
-    setRecipes(prev => [{ ...recipe, id }, ...prev]);
+    setRecipes(prev => [{ ...input, id, isFavorite: false }, ...prev]);
     return id;
   }, []);
 
+  const updateRecipe = useCallback((recipeId: string, input: RecipeInput) => {
+    // id と isFavorite は元のまま、それ以外をフォームの内容で上書き
+    setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...input, id: r.id, isFavorite: r.isFavorite } : r)));
+  }, []);
+
   const value: MockStore = useMemo(
-    () => ({ recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe }),
-    [recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe],
+    () => ({ recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe, updateRecipe }),
+    [recipes, todo, history, toggleFavorite, addToTodo, removeFromTodo, markCooked, addRecipe, updateRecipe],
   );
 
   return <MockStoreContext.Provider value={value}>{children}</MockStoreContext.Provider>;

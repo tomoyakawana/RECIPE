@@ -25,3 +25,10 @@ export type Recipe = {
   // 参考にしたサイトや本など
   sourceUrl?  : string;
 };
+
+/**
+ * 追加・編集フォームから渡す内容
+ * `Omit<Recipe, 'id' | 'isFavorite'>` は「Recipe から id と isFavorite を除いた型」。
+ * id は保存時に採番し、お気に入りはフォームでは扱わないため。
+ */
+export type RecipeInput = Omit<Recipe, 'id' | 'isFavorite'>;
