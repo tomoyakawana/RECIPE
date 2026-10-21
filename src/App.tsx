@@ -17,6 +17,9 @@ import MemoPage from './pages/Memo';
 // 作ったご飯（履歴）
 import HistoryPage from './pages/History';
 
+// 設定
+import SettingsPage from './pages/Settings';
+
 const App = () => {
   return (
     <MockStoreProvider>
@@ -31,6 +34,7 @@ const App = () => {
             <Route path="/todo" element={<TodoPage />} />
             <Route path="/memo" element={<MemoPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

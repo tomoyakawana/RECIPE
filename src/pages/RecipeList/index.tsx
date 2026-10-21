@@ -29,19 +29,28 @@ const RecipeListPage = () => {
 
   return (
     <>
-      {/* ヘッダー：日付 + タイトル + 追加ボタン */}
+      {/* ヘッダー：日付 + タイトル + 設定・追加ボタン */}
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="text-sm text-stone-500">{fmtYmd(todayYmd())}</p>
           <h1 className="text-3xl font-extrabold tracking-tight">今日なに作る？</h1>
         </div>
-        <Link
-          to="/recipes/new"
-          aria-label="レシピを追加"
-          className="flex size-12 items-center justify-center rounded-full bg-brand text-2xl text-white shadow-md shadow-brand/30"
-        >
-          ＋
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/settings"
+            aria-label="設定"
+            className="flex size-11 items-center justify-center rounded-full bg-white text-xl shadow-sm shadow-stone-900/5"
+          >
+            ⚙️
+          </Link>
+          <Link
+            to="/recipes/new"
+            aria-label="レシピを追加"
+            className="flex size-12 items-center justify-center rounded-full bg-brand text-2xl text-white shadow-md shadow-brand/30"
+          >
+            ＋
+          </Link>
+        </div>
       </div>
 
       {/* 検索 */}
