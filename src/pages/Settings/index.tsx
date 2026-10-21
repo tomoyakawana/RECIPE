@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { MOCK_ACCOUNT } from '../../mocks/account';
+import { useAuth } from '../../hooks/useAuth';
 
 /* ---- 設定のまとまり（白いカード + 見出し） ---- */
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -21,12 +21,17 @@ const Row = ({ label, children, note }: { label: string; children?: ReactNode; n
   </div>
 );
 
-/**
- * 設定画面
- * ※ ログイン機能を入れるまでは、アカウントとログアウトは見た目だけ（モック）
- */
+/** 設定画面 */
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const { session, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <>
@@ -41,8 +46,9 @@ const SettingsPage = () => {
 
       <div className="md:max-w-xl">
         <Section title="アカウント">
-          <Row label="ログイン中" note="ログイン機能を入れたら、実際のアカウントが表示されます">
-            <span className="block max-w-44 truncate">{MOCK_ACCOUNT.email}</span>
+          <Row label="ログイン中">
+            {/* session?.user.email：ログイン中ならメールアドレス、そうでなければ undefined */}
+            <span className="block max-w-52 truncate">{session?.user.email}</span>
           </Row>
         </Section>
 
@@ -57,15 +63,14 @@ const SettingsPage = () => {
           <Row label="アプリ名">なに食べたい？</Row>
         </Section>
 
-        {/* ログイン機能を入れるまでは押せない */}
         <button
           type="button"
-          disabled
-          className="mt-2 min-h-12 w-full rounded-2xl bg-white font-bold text-red-500 shadow-sm shadow-stone-900/5 disabled:text-stone-300"
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="mt-2 min-h-12 w-full rounded-2xl bg-white font-bold text-red-500 shadow-sm shadow-stone-900/5 disabled:opacity-60"
         >
-          ログアウト
+          {signingOut ? 'ログアウト中…' : 'ログアウト'}
         </button>
-        <p className="mt-2 text-center text-xs text-stone-400">ログアウトは、ログイン機能を入れたら使えます</p>
       </div>
     </>
   );
