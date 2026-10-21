@@ -1,26 +1,20 @@
+@import 'tailwindcss';
+
+/* アプリ共通の色。bg-brand / text-brand のようにクラスで使える */
+@theme {
+  --color-brand: #e8743b;
+  /* 背景の薄いクリーム色（カードは白のまま、背景だけ温かみを出す） */
+  --color-cream: #fdf8ec;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+}
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-  color: #222;
-  background-color: #fff;
   -webkit-text-size-adjust: 100%;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 body {
-  margin: 0;
-  /* iPhone のノッチ・ホームバーに重ならないよう余白を取る */
+  background-color: var(--color-cream);
+  /* iPhone のノッチ・ホームバーに重ならないよう余白を取る（Tailwind では書きにくいので素の CSS で） */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-.app {
-  padding: 24px 16px;
-}
-
-h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
 }
