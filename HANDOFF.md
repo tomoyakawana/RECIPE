@@ -402,6 +402,18 @@ npx supabase migration list      # ローカルと Supabase の適用状況を�
 
 **確認方法：** 公開用キーで `POST /auth/v1/signup` を送り、**HTTP 422 `signup_disabled`**（Signups not allowed for this instance）が返ること、ユーザー数が増えていないことを確認した（2026-10-20）。
 
+### ログイン（フロント側、2026-10-21）
+| 項目 | 内容 | 理由 |
+|---|---|---|
+| ライブラリ | `@supabase/supabase-js` 2.117.3 | 公開から2週間ほど経った版を選んだ（最新の 2.118.0 は公開6日目だったので見送り） |
+| 公開用キー | 新しい形式の **publishable key**（`sb_publishable_…`）。古い形式の `anon` キー（JWT）は使わない | Supabase が推奨している方。どちらもブラウザに渡る前提の値で、守りは RLS と GRANT |
+| 接続情報の置き場所 | ローカル：`.env.local`（git に入らない）／本番・プレビュー：Cloudflare Pages の環境変数（**Text** で登録、Encrypt にしない） | `VITE_` で始まる変数だけがビルド時にアプリへ渡る。暗号化した値がビルドで使えるかは公式で確認できなかった |
+| 接続の窓口 | `src/utils/supabaseClient.ts` の1か所。接続情報がなければエラーで止める | SSAM の apiClient と同じ考え方。設定漏れに早く気づける |
+| ログイン状態 | `AuthProvider`（`contexts/`）＋ `useAuth()`。未ログインなら `RequireAuth` が `/login` へ移す | SSAM の AuthContext / PrivateRoute と同じ役割。画面の出し分けだけで、データは RLS が守る |
+| セッションの保存先 | supabase-js の既定（ブラウザの保存領域） | **データの正ではなく**、消えたら再ログインするだけなので、CLAUDE.md の「ローカルを正にしない」に反しない |
+| iPhone の注意 | Safari とホーム画面のアプリでログイン状態が共有されない | ホーム画面に追加したら、アプリ側で一度ログインが必要 |
+| エラーメッセージ | 「メールアドレスかパスワードが違います」のように、どちらが違うかは言わない | 推測されにくくするため |
+
 ---
 
 ## 15. 要件メモ・将来の検討事項（2026-10-20 記録、未実装）
