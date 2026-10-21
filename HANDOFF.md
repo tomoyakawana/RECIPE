@@ -461,6 +461,11 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 - [ ] 新しい DB 関数に `security invoker` と `set search_path = ''` を付け、`public` と `anon` から実行権限を外している
 - [ ] `npx supabase db advisors --linked --type security` が **0件**
 
+### Edge Functions
+- [ ] ユーザーが使う関数は `verify_jwt = true`（`supabase/config.toml`）で、関数内も `withSupabase({ auth: 'user' })` になっている
+- [ ] 未ログインで呼ぶと 401 になる（`curl` で公開用キーだけを付けて確認）
+- [ ] 外部 API のキーは Supabase の Secrets にだけ置いている（`npx supabase secrets list` で名前を確認）
+
 ### 秘密情報
 - [ ] **service_role キー**、**DB のパスワード**、**Gemini の API キー**が、フロントのコード・`.env.local` 以外の場所・git に入っていない
 - [ ] フロントに置くのは **URL と公開用キー（publishable key）だけ**（これは見られる前提のもの）
@@ -494,3 +499,59 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 |---|---|---|
 | Security Advisor の WARN：Leaked Password Protection Disabled | パスワード設定時に、漏洩済みパスワードの一覧（HaveIBeenPwned）と照合して弾く機能がオフ | **Pro プラン以上でしか使えない**（公式ドキュメントで確認、2026-10-21）ため、完全無料の条件では対応できない。代わりに、**パスワード管理アプリで作った、ほかで使っていない長いパスワード**を使う運用で守る |
 | `set_updated_at`（トリガー用の関数）に anon の実行権限が残っている | トリガー専用なので、Data API から呼んでも何もできない | 実害なし。次にマイグレーションを足すときに一緒に外す |
+
+---
+
+## 18. AI でレシピを取り込む（機能5、2026-10-21）
+
+### 構成
+```
+アプリ（AiImport：📷 写真から／📋 テキストから）
+  └ utils/parseRecipe.ts → supabase.functions.invoke('parse-recipe')
+        ↓ ログインしている人だけ（verify_jwt ＋ withSupabase({ auth: 'user' }) の二重確認）
+Edge Function「parse-recipe」（supabase/functions/parse-recipe/）
+  └ Gemini を呼ぶのはここだけ（SSAM の ai_service.py と同じ考え方）。API キーは Secrets の GEMINI_API_KEY
+  └ 入力（文章 8,000 文字まで／画像は JPEG・PNG・WebP で約3MBまで）と、Gemini の答えを Zod で検証
+        ↓
+フォームに入れるだけ。保存はしない（人が確認・修正してから保存する）
+```
+
+| 項目 | 内容 | 理由 |
+|---|---|---|
+| モデル | `gemini-3.5-flash-lite` | 無料枠の対象（2026-10-21 公式の料金ページで確認）。SSAM と同じモデル |
+| テキストから取り込む | iPhone のテキスト認識表示（Live Text）でコピーした文字や、レシピサイトの文章を貼り付ける | 川名さんの発案。写真より送るデータが小さく、無料枠の節約になり、写真そのものを外に出さずに済む |
+| 写真から取り込む | アプリ側で長い辺 1600px・JPEG に縮小してから送る（`utils/image.ts`） | iPhone の写真は大きいため、送る量と時間を減らす |
+| 答えの形 | Gemini に JSON の形（`responseSchema`）を指定。作り方は配列で1要素＝1ステップ、1ステップの中では改行しない | フォームの入力欄（1ステップ1欄）にそのまま入れられる |
+| AI への指示 | 書かれていないことを推測で足さない／材料は名前と分量に分ける／番号は外す／広告などは無視／レシピでなければ isRecipe = false | 読み間違いより「勝手に足す」方が気づきにくいため |
+| エラー | 上限（429）、読み取り失敗、レシピではない、などを日本語で返す | — |
+
+### Gemini の無料枠について（2026-10-21 確認）
+- **無料枠では、送った内容が Google の製品改善に使われる**（有料枠では使われない）。送るのはレシピの文章・写真なので許容した。**家族の写真や個人情報が写った写真は送らない**
+- 請求先アカウントは登録していない（＝無料枠のまま。課金されない）。キーは川名さんの個人の Google アカウントで発行
+- 回数の上限は公式ページに数字がなく、**Google AI Studio の画面で確認する**。1日の上限は太平洋時間の0時にリセット
+
+### 手順
+```bash
+# API キーの登録（入力は画面に出ず、シェルの履歴にも残らない）
+read -rs "?Gemini API key: " K && npx supabase secrets set GEMINI_API_KEY="$K"; unset K
+npx supabase secrets list                              # 名前だけ確認（値は出ない）
+
+# 関数のデプロイ（Docker を使わない）
+npx supabase functions deploy parse-recipe --use-api
+npx supabase functions list                            # 版と verify_jwt を確認
+```
+- 手元に Deno がないので、関数の型チェックはデプロイ時に Supabase 側で行われる
+- VS Code で `parse-recipe/index.ts` に赤線（`zod` や `Deno` が見つからない）が出るのは、Node.js 用の設定で読んでいるため。デプロイには影響しない
+
+### フォームの入力欄（2026-10-21 変更）
+- 作り方を「1つの大きな欄に改行で区切る」形から、**1ステップ＝1欄**（番号付き、＋で追加、✕で削除）に変更（川名さんの指摘）。材料にも ✕ を付けて揃えた。最後の1行は消さずに空にする
+- 空の欄は保存時に除く。入力した数と詳細画面の表示数が一致することを、ブラウザでの自動操作で確認した
+
+---
+
+## 19. ログインのセッション（2026-10-21 決定）
+| 項目 | 内容 |
+|---|---|
+| 今の動き | Supabase の既定どおり、**ログアウトするまでログインが続く**（アクセストークン1時間・自動更新、リフレッシュトークンは期限なし） |
+| タイムアウト | **入れない**。Supabase のセッションの期限・無操作タイムアウト・1人1台の設定は **Pro プラン以上のみ**（公式ドキュメントで確認）。それに、毎日スマホで使う家族のアプリなので、ログインしっぱなしの方が使いやすい。スマホ自体のロック（Face ID など）が守りになる |
+| **万が一（スマホをなくした等）** | **ダッシュボードの Authentication → Users でその人のパスワードを変える**。パスワードを変えるとセッションは終わる（公式ドキュメントに記載） |
