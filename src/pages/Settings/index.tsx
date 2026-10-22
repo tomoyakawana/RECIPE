@@ -48,7 +48,7 @@ const SettingsPage = () => {
         </Section>
 
         <Section title="表示">
-          <Row label="シークレットモード" note="オンにすると「リクエスト」が表示されなくなります（予定を見ないためのモード）">
+          <Row label="シークレットモード" note="オンにすると「リクエスト」が表示されません。">
             {/* role="switch"：読み上げ機能にも「オン・オフの切り替え」だと伝わるように */}
             <button
               type="button"
