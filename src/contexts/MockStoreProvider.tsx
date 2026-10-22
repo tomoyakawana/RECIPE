@@ -23,6 +23,7 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   const [history, setHistory] = useState(MOCK_HISTORY);
   const [shopping, setShopping] = useState<ShoppingItem[]>(MOCK_SHOPPING);
   const [note,     setNote]     = useState(MOCK_NOTE);
+  const [secretMode, setSecretMode] = useState(false);
 
   const toggleFavorite = useCallback((recipeId: string) => {
     setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r)));
@@ -111,14 +112,14 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
 
   const value: MockStore = useMemo(
     () => ({
-      recipes, todo, history, shopping, note,
+      recipes, todo, history, shopping, note, secretMode,
       toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
-      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
+      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     }),
     [
-      recipes, todo, history, shopping, note,
+      recipes, todo, history, shopping, note, secretMode,
       toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
-      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
+      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     ],
   );
 

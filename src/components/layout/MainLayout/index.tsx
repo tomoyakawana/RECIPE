@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { useMockStore } from '../../../hooks/useMockStore';
 
 // 下タブ（iPhone）／上メニュー（PC）に並べる画面
 // match：今の URL がこのタブに属するかの判定（レシピ詳細・追加も「レシピ」タブ扱いにする）
@@ -7,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/todo',    label: '今週作る',   icon: '🗓️', match: (path: string) => path.startsWith('/todo') },
   { to: '/memo',    label: 'メモ',       icon: '📝', match: (path: string) => path.startsWith('/memo') },
   { to: '/history', label: '作ったご飯', icon: '🍚', match: (path: string) => path.startsWith('/history') },
+  { to: '/settings', label: '設定',      icon: '⚙️', match: (path: string) => path.startsWith('/settings') },
 ];
 
 /**
@@ -16,6 +18,10 @@ const NAV_ITEMS = [
  */
 const MainLayout = () => {
   const { pathname } = useLocation();
+  const { secretMode } = useMockStore();
+
+  // シークレットモードのときは「今週作る」のタブを出さない
+  const items = secretMode ? NAV_ITEMS.filter(item => item.to !== '/todo') : NAV_ITEMS;
 
   return (
     <div className="min-h-dvh text-stone-800 md:flex md:flex-col">
@@ -30,7 +36,7 @@ const MainLayout = () => {
                    md:static md:inset-auto md:order-1 md:mb-0 md:rounded-none md:bg-cream/90 md:shadow-none"
       >
         <ul className="mx-auto flex max-w-4xl gap-1 p-1.5 md:justify-start md:gap-2 md:px-8 md:py-3">
-          {NAV_ITEMS.map(item => {
+          {items.map(item => {
             const active = item.match(pathname);
             return (
               <li key={item.to} className="flex-1 md:flex-none">

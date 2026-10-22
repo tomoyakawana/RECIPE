@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
+import { useMockStore } from '../../hooks/useMockStore';
 
 /* ---- 設定のまとまり（白いカード + 見出し） ---- */
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -25,6 +26,7 @@ const Row = ({ label, children, note }: { label: string; children?: ReactNode; n
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
+  const { secretMode, setSecretMode } = useMockStore();
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -35,13 +37,6 @@ const SettingsPage = () => {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="mb-3 inline-flex min-h-11 items-center text-sm text-stone-500"
-      >
-        ‹ 戻る
-      </button>
       <h1 className="mb-5 text-3xl font-extrabold tracking-tight">設定</h1>
 
       <div className="md:max-w-xl">
@@ -53,9 +48,22 @@ const SettingsPage = () => {
         </Section>
 
         <Section title="表示">
-          {/* 予定日の表示をユーザーごとに分ける機能（HANDOFF 15 章）を作るときに、ここに切り替えを置く */}
-          <Row label="今週作るの予定日を表示する" note="準備中：予定日を見せない設定にできるようになります">
-            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs">準備中</span>
+          <Row label="シークレットモード" note="オンにすると「今週作る」が表示されなくなります（予定を見ないためのモード）">
+            {/* role="switch"：読み上げ機能にも「オン・オフの切り替え」だと伝わるように */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={secretMode}
+              aria-label="シークレットモード"
+              onClick={() => setSecretMode(!secretMode)}
+              className={`relative h-8 w-13 rounded-full transition-colors ${secretMode ? 'bg-brand' : 'bg-stone-300'}`}
+            >
+              <span
+                className={`absolute top-1 left-1 size-6 rounded-full bg-white shadow transition-transform ${
+                  secretMode ? 'translate-x-5' : ''
+                }`}
+              />
+            </button>
           </Row>
         </Section>
 

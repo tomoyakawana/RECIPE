@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import MonthCalendar from '../../components/common/MonthCalendar';
 import { useMockStore } from '../../hooks/useMockStore';
@@ -74,9 +74,12 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
 );
 
 const TodoPage = () => {
-  const { todo, recipes, setPlannedOn, markCooked, removeFromTodo } = useMockStore();
+  const { todo, recipes, setPlannedOn, markCooked, removeFromTodo, secretMode } = useMockStore();
   const [selected, setSelected] = useState<string>();
   const [notice, setNotice]     = useState('');
+
+  // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
+  if (secretMode) return <Navigate to="/" replace />;
 
   const today = todayYmd();
 
