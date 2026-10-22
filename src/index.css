@@ -6,6 +6,13 @@
   /* 背景の薄いクリーム色（カードは白のまま、背景だけ温かみを出す） */
   --color-cream: #fdf8ec;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+
+  /* トーストが上からふわっと出てくる動き（animate-toast-in で使える） */
+  --animate-toast-in: toast-in 0.25s ease-out;
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 }
 
 :root {

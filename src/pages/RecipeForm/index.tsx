@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import AiImport from '../../components/common/AiImport';
 import { useMockStore } from '../../hooks/useMockStore';
+import { useToast } from '../../hooks/useToast';
 import type { Ingredient, Recipe } from '../../types/recipe';
 import type { RecipeDraft } from '../../utils/parseRecipe';
 
@@ -11,12 +12,19 @@ const INPUT_CLASS = 'min-h-12 w-full rounded-xl border border-stone-200 bg-white
 const EMPTY_INGREDIENT: Ingredient = { name: '', amount: '' };
 
 /**
+ * 料理名を比べるための形にそろえる（重複チェック用）
+ * NFKC：全角英数字を半角に（「ＡＢＣ」→「ABC」）／空白を全部消す／大文字・小文字をそろえる
+ */
+const normalizeTitle = (title: string) => title.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+
+/**
  * レシピの追加・編集で共通のフォーム
  * recipe を渡すと編集モード（今の内容を入力済みで開く）、渡さなければ追加モード
  */
 const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const navigate = useNavigate();
-  const { addRecipe, updateRecipe } = useMockStore();
+  const { recipes, addRecipe, updateRecipe } = useMockStore();
+  const toast = useToast();
   const isEdit = recipe !== undefined;
 
   // 編集時は今の値を初期値にする。数値は入力欄用に文字列へ
@@ -67,6 +75,11 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title.trim()) return;
+
+    // 同じ料理名のレシピがすでにあれば確認する（編集中の自分自身とは比べない）
+    // 「肉じゃが（甘め）」のように同じ料理の別レシピもありうるので、止めずに確認だけにする
+    const duplicated = recipes.some(r => r.id !== recipe?.id && normalizeTitle(r.title) === normalizeTitle(title));
+    if (duplicated && !window.confirm(`「${title.trim()}」という名前のレシピがすでにあります。このまま保存しますか？`)) return;
     const input = {
       title      : title.trim(),
       // 空欄なら undefined（＝項目なし）にする
@@ -82,9 +95,11 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       updateRecipe(recipe.id, input);
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
       navigate(`/recipes/${recipe.id}`, { replace: true });
+      toast.success('レシピを更新しました');
     } else {
       const id = addRecipe(input);
       navigate(`/recipes/${id}`, { replace: true });
+      toast.success('レシピを追加しました');
     }
   };
 
