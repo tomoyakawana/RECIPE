@@ -9,7 +9,7 @@ const ALL = 'すべて';
 const FAV = '★ お気に入り';
 
 const RecipeListPage = () => {
-  const { recipes, todo, toggleFavorite, addToTodo } = useMockStore();
+  const { recipes, todo, toggleFavorite, addToTodo, requestRecipe, secretMode } = useMockStore();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 
@@ -23,9 +23,11 @@ const RecipeListPage = () => {
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
 
-  // 「日付未定」で今週作るに入っているレシピの id（ボタンの表示切り替え用）
+  // 「日付未定」でリクエストに入っているレシピの id（ボタンの表示切り替え用）
   // 日付が決まっているものは別の日にもう一度入れられるので、未定のものだけ見る
   const undatedRecipeIds = new Set(todo.filter(t => !t.plannedOn).map(t => t.recipeId));
+  // シークレットモードでは、自分が「食べたい！」したものだけを見る（奥さんの予定は見せない）
+  const requestedRecipeIds = new Set(todo.filter(t => t.requested).map(t => t.recipeId));
 
   return (
     <>
@@ -99,9 +101,23 @@ const RecipeListPage = () => {
                 {r.title}
               </Link>
               <p className="mt-1 text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
-              {undatedRecipeIds.has(r.id) ? (
+              {secretMode ? (
+                requestedRecipeIds.has(r.id) ? (
+                  <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
+                    ✓ リクエスト済み
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => requestRecipe(r.id)}
+                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                  >
+                    🙋 食べたい！
+                  </button>
+                )
+              ) : undatedRecipeIds.has(r.id) ? (
                 <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
-                  ✓ 今週作る
+                  ✓ リクエスト済み
                 </p>
               ) : (
                 <button
@@ -109,7 +125,7 @@ const RecipeListPage = () => {
                   onClick={() => addToTodo(r.id)}
                   className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
                 >
-                  ＋ 今週作る
+                  ＋ リクエスト
                 </button>
               )}
             </div>

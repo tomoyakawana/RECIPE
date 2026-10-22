@@ -63,7 +63,7 @@ const RecipeDetailPage = () => {
   // URL の /recipes/:id の :id 部分。見つからない可能性もあるので型は string | undefined
   const { id } = useParams();
   const navigate = useNavigate();
-  const { recipes, todo, history, toggleFavorite, addToTodo, setRecipeNote } = useMockStore();
+  const { recipes, todo, history, toggleFavorite, addToTodo, requestRecipe, secretMode, setRecipeNote } = useMockStore();
 
   const recipe = recipes.find(r => r.id === id);
   if (!recipe) {
@@ -77,6 +77,9 @@ const RecipeDetailPage = () => {
 
   // 日付未定で入っていれば「追加済み」。日付が決まっているものとは別に、もう一度追加できる
   const inTodo = todo.some(t => t.recipeId === recipe.id && !t.plannedOn);
+  // シークレットモード：自分が「食べたい！」したかだけを見る
+  const requested = todo.some(t => t.recipeId === recipe.id && t.requested);
+  const done      = secretMode ? requested : inTodo;
   // このレシピを作った記録（新しい順）
   const cookedDates = history
     .filter(h => h.recipeId === recipe.id)
@@ -178,15 +181,17 @@ const RecipeDetailPage = () => {
         </section>
       </div>
 
-      {/* 今週作るボタン（iPhone ではタブバーの上に浮かせる） */}
+      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる） */}
       <div className="sticky bottom-24 md:static">
         <button
           type="button"
-          disabled={inTodo}
-          onClick={() => addToTodo(recipe.id)}
+          disabled={done}
+          onClick={() => (secretMode ? requestRecipe(recipe.id) : addToTodo(recipe.id))}
           className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
-          {inTodo ? '✓ 今週作るに追加済み（日付未定）' : '＋ 今週作るに追加'}
+          {secretMode
+            ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')
+            : (done ? '✓ リクエスト済み（日付未定）' : '＋ リクエストに追加')}
         </button>
       </div>
     </article>

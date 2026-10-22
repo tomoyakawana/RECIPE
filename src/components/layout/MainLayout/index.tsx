@@ -5,7 +5,7 @@ import { useMockStore } from '../../../hooks/useMockStore';
 // match：今の URL がこのタブに属するかの判定（レシピ詳細・追加も「レシピ」タブ扱いにする）
 const NAV_ITEMS = [
   { to: '/',        label: 'レシピ',     icon: '📖', match: (path: string) => path === '/' || path.startsWith('/recipes') },
-  { to: '/todo',    label: '今週作る',   icon: '🗓️', match: (path: string) => path.startsWith('/todo') },
+  { to: '/todo',    label: 'リクエスト', icon: '🙋', match: (path: string) => path.startsWith('/todo') },
   { to: '/memo',    label: 'メモ',       icon: '📝', match: (path: string) => path.startsWith('/memo') },
   { to: '/history', label: '作ったご飯', icon: '🍚', match: (path: string) => path.startsWith('/history') },
   { to: '/settings', label: '設定',      icon: '⚙️', match: (path: string) => path.startsWith('/settings') },
@@ -20,7 +20,7 @@ const MainLayout = () => {
   const { pathname } = useLocation();
   const { secretMode } = useMockStore();
 
-  // シークレットモードのときは「今週作る」のタブを出さない
+  // シークレットモードのときは「リクエスト」のタブを出さない
   const items = secretMode ? NAV_ITEMS.filter(item => item.to !== '/todo') : NAV_ITEMS;
 
   return (

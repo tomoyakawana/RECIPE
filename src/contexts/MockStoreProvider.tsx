@@ -38,6 +38,14 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  const requestRecipe = useCallback((recipeId: string) => {
+    setTodo(prev =>
+      prev.some(t => t.recipeId === recipeId && !t.plannedOn)
+        ? prev.map(t => (t.recipeId === recipeId && !t.plannedOn ? { ...t, requested: true } : t))
+        : [...prev, { id: newId('t'), recipeId, addedOn: todayYmd(), requested: true }],
+    );
+  }, []);
+
   const removeFromTodo = useCallback((todoId: string) => {
     setTodo(prev => prev.filter(t => t.id !== todoId));
   }, []);
@@ -113,12 +121,12 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   const value: MockStore = useMemo(
     () => ({
       recipes, todo, history, shopping, note, secretMode,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
+      toggleFavorite, addToTodo, requestRecipe, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
       addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     }),
     [
       recipes, todo, history, shopping, note, secretMode,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
+      toggleFavorite, addToTodo, requestRecipe, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
       addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     ],
   );
