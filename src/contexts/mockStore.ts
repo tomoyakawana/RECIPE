@@ -17,11 +17,17 @@ export type MockStore = {
   shopping: ShoppingItem[];
   // 夫婦で共有するメモ（1枚）
   note    : string;
+  // シークレットモード（オンのとき「リクエスト」を表示しない。予定を見ないためのモード）
+  // ※ 本来はユーザーごとの設定として DB に保存する。モックの間はメモリ上だけ（リロードでオフに戻る）
+  secretMode: boolean;
   // お気に入りの ON/OFF
   toggleFavorite: (recipeId: string) => void;
   // 「今週作る」に日付未定で追加（同じレシピの日付未定がすでにあれば何もしない）
   addToTodo     : (recipeId: string) => void;
   removeFromTodo: (todoId: string) => void;
+  // 「🙋 食べたい！」（シークレットモードの人用）：日付未定で今週作るに入れ、リクエストの印を付ける
+  // 同じレシピの日付未定がすでにあれば、増やさずにその1件に印を付ける
+  requestRecipe : (recipeId: string) => void;
   // 予定日を設定・変更する（undefined で日付未定に戻す）
   // 同じレシピが同じ日にすでに入っていたら変更しない（false を返す）
   setPlannedOn  : (todoId: string, plannedOn: string | undefined) => boolean;
@@ -45,6 +51,7 @@ export type MockStore = {
   // 同じレシピの同じ材料が、まだ買っていない状態で入っていれば重ねて入れない
   addTodoIngredients  : () => number;
   setNote             : (note: string) => void;
+  setSecretMode       : (on: boolean) => void;
 };
 
 // Provider の外で使われたら null になる（useMockStore でチェックする）

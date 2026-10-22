@@ -18,11 +18,13 @@ PWA（Service Worker）は `npm run dev` では動かない。確認するとき
 
 | 環境 | URL | 使いどころ |
 |---|---|---|
-| ローカル | http://localhost:5173 / iPhone からは `http://<Mac の IP>:5173` | 実装しながら確認する |
+| ローカル | http://localhost:5173 / iPhone からは http://MacBook-Pro-TK.local:5173 | 実装しながら確認する |
 | プレビュー（develop） | https://develop.recipe-dph.pages.dev | PWA としての動作を iPhone で確かめる |
 | 本番（main） | https://recipe-dph.pages.dev | 夫婦で実際に使う |
 
-- iPhone からローカルを見るときは `npm run dev -- --host` で起動し、表示された `Network:` の URL を使う（同じ Wi-Fi に接続すること）
+- iPhone からローカルを見るときは `npm run dev -- --host` で起動し、**http://MacBook-Pro-TK.local:5173** を開く（同じ Wi-Fi に接続すること）
+  - Mac の名前（Bonjour）で開くので、IP アドレスが変わっても使える。名前は `scutil --get LocalHostName` で確認できる
+  - 開けないときは、起動時に表示される `Network:` の URL（IP アドレス）を使う
 - develop / main に push すると Cloudflare Pages が自動でデプロイする
 - ブランチ運用は develop で実装 → ローカル検証 → main にマージ（詳細は [CLAUDE.md](CLAUDE.md)）
 

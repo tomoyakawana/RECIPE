@@ -23,6 +23,7 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   const [history, setHistory] = useState(MOCK_HISTORY);
   const [shopping, setShopping] = useState<ShoppingItem[]>(MOCK_SHOPPING);
   const [note,     setNote]     = useState(MOCK_NOTE);
+  const [secretMode, setSecretMode] = useState(false);
 
   const toggleFavorite = useCallback((recipeId: string) => {
     setRecipes(prev => prev.map(r => (r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r)));
@@ -34,6 +35,14 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
       prev.some(t => t.recipeId === recipeId && !t.plannedOn)
         ? prev
         : [...prev, { id: newId('t'), recipeId, addedOn: todayYmd() }],
+    );
+  }, []);
+
+  const requestRecipe = useCallback((recipeId: string) => {
+    setTodo(prev =>
+      prev.some(t => t.recipeId === recipeId && !t.plannedOn)
+        ? prev.map(t => (t.recipeId === recipeId && !t.plannedOn ? { ...t, requested: true } : t))
+        : [...prev, { id: newId('t'), recipeId, addedOn: todayYmd(), requested: true }],
     );
   }, []);
 
@@ -111,14 +120,14 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
 
   const value: MockStore = useMemo(
     () => ({
-      recipes, todo, history, shopping, note,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
-      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
+      recipes, todo, history, shopping, note, secretMode,
+      toggleFavorite, addToTodo, requestRecipe, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
+      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     }),
     [
-      recipes, todo, history, shopping, note,
-      toggleFavorite, addToTodo, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
-      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
+      recipes, todo, history, shopping, note, secretMode,
+      toggleFavorite, addToTodo, requestRecipe, removeFromTodo, setPlannedOn, markCooked, addRecipe, updateRecipe, setRecipeNote,
+      addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote, setSecretMode,
     ],
   );
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import MonthCalendar from '../../components/common/MonthCalendar';
 import { useMockStore } from '../../hooks/useMockStore';
@@ -32,7 +32,7 @@ const DatePill = ({ value, onChange }: { value?: string; onChange: (v: string | 
   </label>
 );
 
-/* ---- 今週作るの 1件 ---- */
+/* ---- リクエストの 1件 ---- */
 type CardProps = {
   item     : TodoItem;
   recipe   : Recipe;
@@ -52,6 +52,9 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
         <div className="min-w-0 flex-1 pt-1">
           <Link to={`/recipes/${recipe.id}`} className="block truncate font-bold">{recipe.title}</Link>
           {/* レシピのひとことメモ（作るときに思い出せるように、1行だけ小さく） */}
+          {item.requested && (
+            <span className="mt-0.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">🙋 食べたい！</span>
+          )}
           {recipe.note && <p className="truncate text-xs text-stone-500">💬 {recipe.note}</p>}
         </div>
         <button
@@ -74,9 +77,12 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
 );
 
 const TodoPage = () => {
-  const { todo, recipes, setPlannedOn, markCooked, removeFromTodo } = useMockStore();
+  const { todo, recipes, setPlannedOn, markCooked, removeFromTodo, secretMode } = useMockStore();
   const [selected, setSelected] = useState<string>();
   const [notice, setNotice]     = useState('');
+
+  // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
+  if (secretMode) return <Navigate to="/" replace />;
 
   const today = todayYmd();
 
@@ -134,9 +140,9 @@ const TodoPage = () => {
 
   return (
     <>
-      <h1 className="text-3xl font-extrabold tracking-tight">今週作る</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">リクエスト</h1>
       <p className="mt-1 mb-4 text-sm text-stone-500">
-        {rows.length > 0 ? `${rows.length}品。日付を決めて、作ったら「作った！」` : '作りたいものを入れておこう'}
+        {rows.length > 0 ? `${rows.length}品。日付を決めて、作ったら「作った！」` : '作りたいもの・食べたいものを入れておこう'}
       </p>
 
       <div className="md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:items-start md:gap-6">

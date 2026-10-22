@@ -6,7 +6,7 @@ const INPUT_CLASS = 'min-h-11 rounded-xl border border-stone-200 bg-white px-3 t
 
 const MemoPage = () => {
   const {
-    shopping, note, recipes, todo,
+    shopping, note, recipes, todo, secretMode,
     addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
   } = useMockStore();
 
@@ -47,14 +47,14 @@ const MemoPage = () => {
             <span className="text-xs text-stone-500">残り {unchecked.length}品</span>
           </div>
 
-          {/* 今週作るの材料から追加 */}
+          {/* リクエストの材料から追加 */}
           <button
             type="button"
             onClick={handleAddFromTodo}
             disabled={todo.length === 0}
             className="mb-3 min-h-11 w-full rounded-full bg-brand/10 text-sm font-bold text-brand disabled:bg-stone-100 disabled:text-stone-400"
           >
-            🗓️ 今週作るの材料から追加
+            🙋 リクエストの材料から追加
           </button>
           {notice && <p className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">{notice}</p>}
 
@@ -85,7 +85,8 @@ const MemoPage = () => {
                         {item.name}
                         {item.amount && <span className="ml-2 text-sm text-stone-500">{item.amount}</span>}
                       </span>
-                      {from && <span className="block truncate text-xs text-stone-400">{from}</span>}
+                      {/* シークレットモードでは、どの料理の材料かを出さない（ネタバレ防止） */}
+                      {from && !secretMode && <span className="block truncate text-xs text-stone-400">{from}</span>}
                     </span>
                   </label>
                   <button

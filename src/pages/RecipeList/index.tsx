@@ -9,7 +9,7 @@ const ALL = 'すべて';
 const FAV = '★ お気に入り';
 
 const RecipeListPage = () => {
-  const { recipes, todo, toggleFavorite, addToTodo } = useMockStore();
+  const { recipes, todo, toggleFavorite, addToTodo, requestRecipe, secretMode } = useMockStore();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 
@@ -23,34 +23,27 @@ const RecipeListPage = () => {
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
 
-  // 「日付未定」で今週作るに入っているレシピの id（ボタンの表示切り替え用）
+  // 「日付未定」でリクエストに入っているレシピの id（ボタンの表示切り替え用）
   // 日付が決まっているものは別の日にもう一度入れられるので、未定のものだけ見る
   const undatedRecipeIds = new Set(todo.filter(t => !t.plannedOn).map(t => t.recipeId));
+  // シークレットモードでは、自分が「食べたい！」したものだけを見る（奥さんの予定は見せない）
+  const requestedRecipeIds = new Set(todo.filter(t => t.requested).map(t => t.recipeId));
 
   return (
     <>
-      {/* ヘッダー：日付 + タイトル + 設定・追加ボタン */}
+      {/* ヘッダー：日付 + タイトル + 追加ボタン */}
       <div className="mb-4 flex items-end justify-between">
         <div>
           <p className="text-sm text-stone-500">{fmtYmd(todayYmd())}</p>
           <h1 className="text-3xl font-extrabold tracking-tight">今日なに作る？</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/settings"
-            aria-label="設定"
-            className="flex size-11 items-center justify-center rounded-full bg-white text-xl shadow-sm shadow-stone-900/5"
-          >
-            ⚙️
-          </Link>
-          <Link
+        <Link
             to="/recipes/new"
             aria-label="レシピを追加"
             className="flex size-12 items-center justify-center rounded-full bg-brand text-2xl text-white shadow-md shadow-brand/30"
           >
-            ＋
-          </Link>
-        </div>
+          ＋
+        </Link>
       </div>
 
       {/* 検索 */}
@@ -108,9 +101,23 @@ const RecipeListPage = () => {
                 {r.title}
               </Link>
               <p className="mt-1 text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
-              {undatedRecipeIds.has(r.id) ? (
+              {secretMode ? (
+                requestedRecipeIds.has(r.id) ? (
+                  <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
+                    ✓ リクエスト済み
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => requestRecipe(r.id)}
+                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                  >
+                    🙋 食べたい！
+                  </button>
+                )
+              ) : undatedRecipeIds.has(r.id) ? (
                 <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
-                  ✓ 今週作る
+                  ✓ リクエスト済み
                 </p>
               ) : (
                 <button
@@ -118,7 +125,7 @@ const RecipeListPage = () => {
                   onClick={() => addToTodo(r.id)}
                   className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
                 >
-                  ＋ 今週作る
+                  ＋ リクエスト
                 </button>
               )}
             </div>

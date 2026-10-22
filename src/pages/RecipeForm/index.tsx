@@ -1,7 +1,9 @@
 import { useState, type SubmitEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import AiImport from '../../components/common/AiImport';
 import { useMockStore } from '../../hooks/useMockStore';
 import type { Ingredient, Recipe } from '../../types/recipe';
+import type { RecipeDraft } from '../../utils/parseRecipe';
 
 // 入力欄の共通スタイル（iOS の自動ズームを避けるため text-base = 16px）
 const INPUT_CLASS = 'min-h-12 w-full rounded-xl border border-stone-200 bg-white px-3 text-base outline-none focus:ring-2 focus:ring-brand/40';
@@ -25,14 +27,41 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     recipe && recipe.ingredients.length > 0 ? recipe.ingredients : [EMPTY_INGREDIENT],
   );
-  const [steps,       setSteps]       = useState(recipe?.steps.join('\n') ?? '');
+  // 作り方は1ステップ = 1つの入力欄。空なら1つだけ空欄を出す
+  const [steps,       setSteps]       = useState<string[]>(recipe && recipe.steps.length > 0 ? recipe.steps : ['']);
   const [sourceUrl,   setSourceUrl]   = useState(recipe?.sourceUrl ?? '');
-  const [importNote,  setImportNote]  = useState('');
+
+  // AI が読み取った下書きをフォームに入れる（参考URL は AI からは来ないのでそのまま）
+  const applyDraft = (draft: RecipeDraft) => {
+    // すでに何か入力していたら、上書きしてよいか確認する
+    const hasInput = title.trim() || steps.some(st => st.trim()) || ingredients.some(ing => ing.name.trim());
+    if (hasInput && !window.confirm('入力中の内容を、読み取った内容で置き換えますか？')) return;
+
+    setTitle(draft.title);
+    setCookMinutes(draft.cookMinutes?.toString() ?? '');
+    setServings(draft.servings?.toString() ?? '');
+    setTags(draft.tags.join(' '));
+    setIngredients(draft.ingredients.length > 0 ? draft.ingredients : [EMPTY_INGREDIENT]);
+    setSteps(draft.steps.length > 0 ? draft.steps : ['']);
+  };
 
   // 材料の i 行目の name か amount を書き換える
   // `keyof Ingredient` は 'name' | 'amount' のどちらか、という型
   const updateIngredient = (i: number, key: keyof Ingredient, value: string) => {
     setIngredients(prev => prev.map((ing, idx) => (idx === i ? { ...ing, [key]: value } : ing)));
+  };
+
+  // 材料の i 行目を消す（最後の1行は消さずに空にする）
+  const removeIngredient = (i: number) => {
+    setIngredients(prev => (prev.length === 1 ? [EMPTY_INGREDIENT] : prev.filter((_, idx) => idx !== i)));
+  };
+
+  // 作り方の i 番目を書き換える／欄を消す（最後の1つは消さずに空にする）
+  const updateStep = (i: number, value: string) => {
+    setSteps(prev => prev.map((st, idx) => (idx === i ? value : st)));
+  };
+  const removeStep = (i: number) => {
+    setSteps(prev => (prev.length === 1 ? [''] : prev.filter((_, idx) => idx !== i)));
   };
 
   const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -45,7 +74,8 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       servings   : servings ? Number(servings) : undefined,
       tags       : tags.split(/[,、\s]+/).filter(Boolean),
       ingredients: ingredients.filter(ing => ing.name.trim()),
-      steps      : steps.split('\n').map(s => s.trim()).filter(Boolean),
+      // 空の欄は除く
+      steps      : steps.map(st => st.trim()).filter(Boolean),
       sourceUrl  : sourceUrl.trim() || undefined,
     };
     if (isEdit) {
@@ -65,17 +95,8 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       </Link>
       <h1 className="mb-4 text-3xl font-extrabold tracking-tight">{isEdit ? 'レシピを編集' : 'レシピを追加'}</h1>
 
-      {/* 写真から取り込み（機能5）。今は写真を選ぶところまで */}
-      <label className="mb-6 flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand/40 bg-white font-bold text-brand">
-        📷 写真から取り込む（AI）
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => setImportNote(e.target.files?.[0] ? `「${e.target.files[0].name}」を選択しました。AI での読み取りは後で実装します。` : '')}
-        />
-      </label>
-      {importNote && <p className="-mt-4 mb-6 text-sm text-stone-500">{importNote}</p>}
+      {/* AI で取り込む（機能5）。結果はフォームに入れるだけで、保存はしない */}
+      <AiImport onDraft={applyDraft} />
 
       <div className="space-y-4">
         <div>
@@ -103,9 +124,17 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
           <label className="mb-1 block text-sm font-bold">材料</label>
           <div className="space-y-2">
             {ingredients.map((ing, i) => (
-              <div key={i} className="flex gap-2">
-                <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} className={`${INPUT_CLASS} flex-[2]`} placeholder="材料" />
-                <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className={`${INPUT_CLASS} flex-1`} placeholder="分量" />
+              <div key={i} className="flex items-center gap-2">
+                <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-[2]`} placeholder="材料" />
+                <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-1`} placeholder="分量" />
+                <button
+                  type="button"
+                  onClick={() => removeIngredient(i)}
+                  aria-label={`材料${i + 1}を消す`}
+                  className="flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
@@ -119,8 +148,38 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-bold">作り方（1行 = 1ステップ）</label>
-          <textarea value={steps} onChange={e => setSteps(e.target.value)} rows={5} className={`${INPUT_CLASS} py-2`} />
+          <label className="mb-1 block text-sm font-bold">作り方</label>
+          <ol className="space-y-2">
+            {steps.map((st, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-3 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                  {i + 1}
+                </span>
+                <textarea
+                  value={st}
+                  onChange={e => updateStep(i, e.target.value)}
+                  rows={2}
+                  placeholder={i === 0 ? '例：玉ねぎを薄切りにする' : ''}
+                  className={`${INPUT_CLASS} min-w-0 flex-1 resize-y py-2`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeStep(i)}
+                  aria-label={`手順${i + 1}を消す`}
+                  className="mt-1.5 flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            onClick={() => setSteps(prev => [...prev, ''])}
+            className="mt-2 min-h-11 text-sm font-bold text-brand"
+          >
+            ＋ 手順を追加
+          </button>
         </div>
 
         <div>
