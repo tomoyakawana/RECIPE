@@ -17,7 +17,8 @@ import { z } from 'zod';
 // ────────────────────────────────────────────────
 const MODEL           = 'gemini-3.5-flash-lite';   // 無料枠の対象（2026-10-21 公式の料金ページで確認）
 const GEMINI_URL      = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-const TIMEOUT_MS      = 30_000;
+// Gemini を待つ時間。Edge Function は無料プランでも1回150秒まで動ける（2026-10-22 公式で確認）ので、余裕を残して90秒
+const TIMEOUT_MS      = 90_000;
 const MAX_TEXT_CHARS  = 8_000;                     // 長すぎる文章は受け付けない（無料枠の節約）
 const MAX_IMAGE_CHARS = 4_000_000;                 // base64 で約 3MB まで（アプリ側で縮小してから送る前提）
 const IMAGE_TYPES     = ['image/jpeg', 'image/png', 'image/webp'] as const;
@@ -72,8 +73,9 @@ const PROMPT = `あなたは料理レシピの整理係です。与えられた�
 ルール：
 - 書かれていないことを推測で足さない（分量が書かれていなければ amount は空文字、時間や人数がなければ null）
 - 材料は「名前」と「分量」に分ける（例：「豚ロース 300g」→ name: 豚ロース, amount: 300g）
+- 写真の文字認識などで、材料名だけが続いた後に分量だけが続いている場合は、上から順番に対応づける（1番目の材料名と1番目の分量、2番目と2番目…）
 - 作り方は1ステップずつに分け、先頭の番号（1. や ①）は外す。1つのステップの中では改行しない
-- 広告・関連レシピ・コメントなど、レシピ本体以外は無視する
+- 広告・アプリの宣伝・関連レシピ・コメント・栄養成分・シェアボタンなど、レシピ本体以外は無視する
 - 料理のレシピとして読み取れない場合は isRecipe を false にする`;
 
 // ────────────────────────────────────────────────
@@ -94,15 +96,29 @@ const callGemini = async (input: z.infer<typeof InputSchema>): Promise<RecipeDra
     ? { text: input.text }
     : { inline_data: { mime_type: input.mimeType, data: input.imageBase64 } };
 
-  const res = await fetch(GEMINI_URL, {
-    method : 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body   : JSON.stringify({
-      contents        : [{ role: 'user', parts: [{ text: PROMPT }, userPart] }],
-      generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_RESPONSE_SCHEMA, temperature: 0.2 },
-    }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
+  // ログ用：何を、どれくらいの大きさで送ったか（中身や API キーはログに出さない）
+  const kind    = 'text' in input ? `text chars=${input.text.length}` : `image base64chars=${input.imageBase64.length}`;
+  const started = Date.now();
+
+  let res: Response;
+  try {
+    res = await fetch(GEMINI_URL, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body   : JSON.stringify({
+        contents        : [{ role: 'user', parts: [{ text: PROMPT }, userPart] }],
+        generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_RESPONSE_SCHEMA, temperature: 0.2 },
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (e) {
+    // 時間切れは、何が起きたか分かるメッセージにする
+    if (e instanceof DOMException && e.name === 'TimeoutError') {
+      console.error(`[parse-recipe] timeout ${kind} ms=${Date.now() - started}`);
+      throw new UserFacingError('AI の返事に時間がかかりすぎました。少し時間をおいてもう一度お試しください', 504);
+    }
+    throw e;
+  }
 
   if (res.status === 429) throw new UserFacingError('AI の利用回数の上限に達しました。しばらく時間をおいてお試しください', 429);
   if (!res.ok) {
@@ -111,6 +127,12 @@ const callGemini = async (input: z.infer<typeof InputSchema>): Promise<RecipeDra
   }
 
   const body = await res.json();
+  // かかった時間と、使ったトークン数（考える処理の分も含む）を残して、遅さの原因を調べられるようにする
+  const usage = body?.usageMetadata ?? {};
+  console.log(
+    `[parse-recipe] ok ${kind} ms=${Date.now() - started} ` +
+    `prompt=${usage.promptTokenCount} output=${usage.candidatesTokenCount} thoughts=${usage.thoughtsTokenCount ?? 0}`,
+  );
   const raw  = body?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (typeof raw !== 'string') throw new UserFacingError('AI から答えが返ってきませんでした', 502);
 
