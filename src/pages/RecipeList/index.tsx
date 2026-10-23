@@ -5,8 +5,11 @@ import { useMockStore } from '../../hooks/useMockStore';
 import { fmtYmd, todayYmd } from '../../utils/date';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
-const ALL = 'すべて';
-const FAV = '★ お気に入り';
+const ALL   = 'すべて';
+const FAV   = '★ お気に入り';
+const QUICK = '⏱ 20分以内';
+// 「時短」とみなす調理時間（分）。タグではなく調理時間から自動で判定する（時間を直したときにずれないように）
+const QUICK_MINUTES = 20;
 
 const RecipeListPage = () => {
   const { recipes, todo, toggleFavorite, addToTodo, requestRecipe, secretMode } = useMockStore();
@@ -18,7 +21,9 @@ const RecipeListPage = () => {
 
   const filtered = recipes.filter(r => {
     if (chip === FAV && !r.isFavorite) return false;
-    if (chip !== ALL && chip !== FAV && !r.tags.includes(chip)) return false;
+    // 調理時間が分からないレシピは、20分以内には含めない
+    if (chip === QUICK && !(r.cookMinutes && r.cookMinutes <= QUICK_MINUTES)) return false;
+    if (chip !== ALL && chip !== FAV && chip !== QUICK && !r.tags.includes(chip)) return false;
     if (!keyword) return true;
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
@@ -61,7 +66,7 @@ const RecipeListPage = () => {
 
       {/* 絞り込みチップ（横スクロール） */}
       <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0">
-        {[ALL, FAV, ...allTags].map(c => (
+        {[ALL, FAV, QUICK, ...allTags].map(c => (
           <button
             key={c}
             type="button"
