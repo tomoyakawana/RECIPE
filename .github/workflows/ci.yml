@@ -1,0 +1,49 @@
+# CI：PR と develop への push のたびに、壊れていないかを自動で確かめる
+#   web           … フロントの lint とビルド（ビルドの中で TypeScript の型チェックも走る）
+#   edge-functions … Edge Function の型チェック（手元に Deno がないので、ここで確かめる）
+#
+# 無料プランの private リポジトリでは月 2,000 分まで。使い切っても支払い方法がなければ止まるだけ（課金されない）
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+# 読み取りだけで足りる（書き込みの権限は渡さない）
+permissions:
+  contents: read
+
+# 同じブランチで新しく push されたら、古い実行は止めて時間を節約する
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: フロント（lint・ビルド）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # 手元・Cloudflare と同じ Node のバージョンにそろえる
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  edge-functions:
+    name: Edge Function（型チェック）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: parse-recipe
+        working-directory: supabase/functions/parse-recipe
+        run: deno check index.ts
