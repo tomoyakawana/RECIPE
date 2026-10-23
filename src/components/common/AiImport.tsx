@@ -4,14 +4,16 @@ import { parseRecipe, type ParseInput, type RecipeDraft } from '../../utils/pars
 
 type Props = {
   // 読み取りに成功したら、フォームに入れてもらう
-  onDraft: (draft: RecipeDraft) => void;
+  onDraft     : (draft: RecipeDraft) => void;
+  // 今あるタグ。AI に「なるべくこの中から選んで」と渡す
+  existingTags: string[];
 };
 
 /**
  * 「📷 写真から」「📋 テキストから」AI でレシピを取り込む部品
  * 結果はフォームに入れるだけで、保存はしない（人が確認してから保存する）
  */
-const AiImport = ({ onDraft }: Props) => {
+const AiImport = ({ onDraft, existingTags }: Props) => {
   const [mode,    setMode]    = useState<'none' | 'text'>('none');
   const [text,    setText]    = useState('');
   // 読み取り中かどうか。写真は時間がかかるので、待ち時間の目安を変える
@@ -23,7 +25,7 @@ const AiImport = ({ onDraft }: Props) => {
   const run = async (input: ParseInput) => {
     setLoading('text' in input ? 'text' : 'image');
     setMessage(null);
-    const result = await parseRecipe(input);
+    const result = await parseRecipe(input, existingTags);
     setLoading(false);
     if (result.error !== undefined) {
       setMessage({ type: 'error', text: result.error });

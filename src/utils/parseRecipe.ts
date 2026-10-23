@@ -22,8 +22,12 @@ type ParseResult = { draft: RecipeDraft; error?: undefined } | { draft?: undefin
  * AI でレシピを読み取る（フロントから AI を呼ぶ唯一の窓口）
  * 実際に Gemini を呼ぶのは Edge Function 側。API キーはフロントには来ない
  */
-export const parseRecipe = async (input: ParseInput): Promise<ParseResult> => {
-  const { data, error } = await supabase.functions.invoke<{ draft: RecipeDraft }>('parse-recipe', { body: input });
+export const parseRecipe = async (input: ParseInput, existingTags: string[] = []): Promise<ParseResult> => {
+  // 今あるタグも一緒に送り、AI になるべく同じタグを使わせる（「和食」と「和風」のような表記ゆれを防ぐ）
+  const { data, error } = await supabase.functions.invoke<{ draft: RecipeDraft }>('parse-recipe', {
+    // Edge Function の入口の上限（20文字・100個）に合わせて、送る前にそろえておく（はみ出すと読み取り自体が失敗するため）
+    body: { ...input, existingTags: existingTags.filter(t => t.trim() && t.length <= 20).slice(0, 100) },
+  });
 
   if (error) {
     // 関数がエラーを返したときは、本文に日本語のメッセージ（{ error }）が入っている

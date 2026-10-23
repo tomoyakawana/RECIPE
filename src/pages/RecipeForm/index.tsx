@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import AiImport from '../../components/common/AiImport';
+import TagSelector from '../../components/common/TagSelector';
 import { useMockStore } from '../../hooks/useMockStore';
 import { useToast } from '../../hooks/useToast';
 import type { Ingredient, Recipe } from '../../types/recipe';
@@ -25,13 +26,16 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const navigate = useNavigate();
   const { recipes, addRecipe, updateRecipe } = useMockStore();
   const toast = useToast();
+
+  // 今あるレシピに付いているタグ（重複なし）。タグの選択肢と、AI に「なるべくこれを使って」と渡す一覧に使う
+  const allTags = [...new Set(recipes.flatMap(r => r.tags))];
   const isEdit = recipe !== undefined;
 
   // 編集時は今の値を初期値にする。数値は入力欄用に文字列へ
   const [title,       setTitle]       = useState(recipe?.title ?? '');
   const [cookMinutes, setCookMinutes] = useState(recipe?.cookMinutes?.toString() ?? '');
   const [servings,    setServings]    = useState(recipe?.servings?.toString() ?? '');
-  const [tags,        setTags]        = useState(recipe?.tags.join(' ') ?? '');
+  const [tags,        setTags]        = useState<string[]>(recipe?.tags ?? []);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     recipe && recipe.ingredients.length > 0 ? recipe.ingredients : [EMPTY_INGREDIENT],
   );
@@ -48,7 +52,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     setTitle(draft.title);
     setCookMinutes(draft.cookMinutes?.toString() ?? '');
     setServings(draft.servings?.toString() ?? '');
-    setTags(draft.tags.join(' '));
+    setTags(draft.tags);
     setIngredients(draft.ingredients.length > 0 ? draft.ingredients : [EMPTY_INGREDIENT]);
     setSteps(draft.steps.length > 0 ? draft.steps : ['']);
   };
@@ -85,7 +89,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       // 空欄なら undefined（＝項目なし）にする
       cookMinutes: cookMinutes ? Number(cookMinutes) : undefined,
       servings   : servings ? Number(servings) : undefined,
-      tags       : tags.split(/[,、\s]+/).filter(Boolean),
+      tags       : tags,
       ingredients: ingredients.filter(ing => ing.name.trim()),
       // 空の欄は除く
       steps      : steps.map(st => st.trim()).filter(Boolean),
@@ -111,7 +115,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       <h1 className="mb-4 text-3xl font-extrabold tracking-tight">{isEdit ? 'レシピを編集' : 'レシピを追加'}</h1>
 
       {/* AI で取り込む（機能5）。結果はフォームに入れるだけで、保存はしない */}
-      <AiImport onDraft={applyDraft} />
+      <AiImport onDraft={applyDraft} existingTags={allTags} />
 
       <div className="space-y-4">
         <div>
@@ -132,7 +136,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
 
         <div>
           <label className="mb-1 block text-sm font-bold">タグ</label>
-          <input value={tags} onChange={e => setTags(e.target.value)} className={INPUT_CLASS} placeholder="例：和食 豚肉（スペース区切り）" />
+          <TagSelector selected={tags} options={allTags} onChange={setTags} />
         </div>
 
         <div>

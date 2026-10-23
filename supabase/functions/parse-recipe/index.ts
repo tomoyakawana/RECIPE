@@ -26,9 +26,12 @@ const IMAGE_TYPES     = ['image/jpeg', 'image/png', 'image/webp'] as const;
 // ────────────────────────────────────────────────
 // 入力の検証：文章か画像のどちらか
 // ────────────────────────────────────────────────
+// 今あるタグ（任意）。AI になるべくこの中から選ばせる
+const ExistingTagsSchema = z.array(z.string().trim().min(1).max(20)).max(100).optional();
+
 const InputSchema = z.union([
-  z.object({ text: z.string().trim().min(1).max(MAX_TEXT_CHARS) }),
-  z.object({ imageBase64: z.string().min(1).max(MAX_IMAGE_CHARS), mimeType: z.enum(IMAGE_TYPES) }),
+  z.object({ text: z.string().trim().min(1).max(MAX_TEXT_CHARS), existingTags: ExistingTagsSchema }),
+  z.object({ imageBase64: z.string().min(1).max(MAX_IMAGE_CHARS), mimeType: z.enum(IMAGE_TYPES), existingTags: ExistingTagsSchema }),
 ]);
 
 // ────────────────────────────────────────────────
@@ -55,7 +58,7 @@ const GEMINI_RESPONSE_SCHEMA = {
     title      : { type: 'STRING',  description: '料理名' },
     cookMinutes: { type: 'INTEGER', nullable: true, description: '調理時間（分）。書かれていなければ null' },
     servings   : { type: 'INTEGER', nullable: true, description: '何人分か。書かれていなければ null' },
-    tags       : { type: 'ARRAY', items: { type: 'STRING' }, description: '和食・洋食・中華・豚肉・魚・パスタ・スープ・作り置き などから当てはまるもの' },
+    tags       : { type: 'ARRAY', items: { type: 'STRING' }, description: 'ジャンル（和食・洋食・中華など）や主な食材（豚肉・魚など）のタグ。既存のタグがあれば、なるべくその中から選ぶ' },
     ingredients: {
       type : 'ARRAY',
       items: {
@@ -92,6 +95,11 @@ const callGemini = async (input: z.infer<typeof InputSchema>): Promise<RecipeDra
   if (!apiKey) throw new Error('GEMINI_API_KEY が設定されていません');
 
   // 'text' in input：文章で来たか画像で来たかを見分ける（TS はこれで型を絞り込める）
+  // 今あるタグを指示に足す（なければ、例のタグを目安にする）
+  const tagRule = input.existingTags && input.existingTags.length > 0
+    ? `\n- タグは、次の既存のタグの中から当てはまるものを優先して選ぶ（表記も同じにする）：${input.existingTags.join('、')}\n  どうしても当てはまらない場合だけ、短い名詞で新しいタグを作る。タグは5個まで`
+    : '\n- タグは、ジャンル（和食・洋食・中華など）と主な食材（豚肉・魚など）を短い名詞で5個まで';
+
   const userPart = 'text' in input
     ? { text: input.text }
     : { inline_data: { mime_type: input.mimeType, data: input.imageBase64 } };
@@ -106,7 +114,7 @@ const callGemini = async (input: z.infer<typeof InputSchema>): Promise<RecipeDra
       method : 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body   : JSON.stringify({
-        contents        : [{ role: 'user', parts: [{ text: PROMPT }, userPart] }],
+        contents        : [{ role: 'user', parts: [{ text: PROMPT + tagRule }, userPart] }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_RESPONSE_SCHEMA, temperature: 0.2 },
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
