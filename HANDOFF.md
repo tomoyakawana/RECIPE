@@ -536,6 +536,7 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 - [ ] `.env.local` が git に入っていない（`.gitignore` の `*.local`）
 
 ### 運用
+- [ ] **CI（GitHub Actions）が ✅** になっている（PR の画面、または Actions タブ）
 - [ ] マイグレーションはコミット済みのものだけを `db push` している
 - [ ] ダッシュボードや DBeaver でスキーマを直接変えていない
 
@@ -635,3 +636,44 @@ npx supabase functions list                            # 版と verify_jwt を�
 | 今の動き | Supabase の既定どおり、**ログアウトするまでログインが続く**（アクセストークン1時間・自動更新、リフレッシュトークンは期限なし） |
 | タイムアウト | **入れない**。Supabase のセッションの期限・無操作タイムアウト・1人1台の設定は **Pro プラン以上のみ**（公式ドキュメントで確認）。それに、毎日スマホで使う家族のアプリなので、ログインしっぱなしの方が使いやすい。スマホ自体のロック（Face ID など）が守りになる |
 | **万が一（スマホをなくした等）** | **ダッシュボードの Authentication → Users でその人のパスワードを変える**。パスワードを変えるとセッションは終わる（公式ドキュメントに記載） |
+
+---
+
+## 20. CI（GitHub Actions）（2026-10-23 導入）
+
+ファイル：[.github/workflows/ci.yml](.github/workflows/ci.yml)
+
+| ジョブ | 中身 | いつ動くか |
+|---|---|---|
+| フロント（lint・ビルド） | `npm ci` → `npm run lint` → `npm run build`（ビルドの中で TypeScript の型チェックも走る） | PR を出したとき・更新したとき、develop に push したとき |
+| Edge Function（型チェック） | Deno で `deno check`（`supabase/functions/parse-recipe`） | 同上 |
+
+| 判断 | 理由 |
+|---|---|
+| 入れた | Claude が毎回手元でやっていたビルド・lint の確認を、GitHub でも二重に行う。**手元に Deno がなく、Edge Function の型チェックが一度もできていなかった**穴を埋める。現場ではほぼ必ずある仕組みで、練習にもなる |
+| Issue にしなかった | その場で作って終わる作業だったため（CLAUDE.md ルール8） |
+| Node は `.node-version` を読む | 手元・Cloudflare・GitHub の3か所でバージョンをそろえる |
+| 権限は読み取りだけ、10分で打ち切り、同じブランチの古い実行は止める | 安全と、無料枠の節約 |
+| SQL のテストはまだ入れていない | テスト用の SQL が今はリポジトリになく（一時フォルダで実行していた）、入れるには少し手間がかかる。マイグレーションを増やす前（#18 のあたり）に入れると心強い |
+
+**CI とデプロイの関係（混同しやすいので注意）**
+| | CI（GitHub Actions） | デプロイ（Cloudflare Pages） |
+|---|---|---|
+| 役割 | 壊れていないかを**確かめるだけ**（どこにも公開しない） | 画面を**公開する** |
+| develop に push | lint・ビルド・型チェック | プレビュー環境（develop.recipe-dph.pages.dev）に反映 |
+| main に push | （PR の時点で実行済み） | 本番（recipe-dph.pages.dev）に反映 |
+
+- **2つはつながっていない。CI が ❌ でも Cloudflare は公開する。** なので、main にマージする前に PR の画面で CI が ✅ か必ず見る
+- **画面は本番とプレビューで分かれているが、Supabase（DB・Edge Function）は1つだけ**（14 章：プロジェクトは1つ）。DB につないだ後は、プレビューで試した操作も本物のデータに入る。Edge Function はデプロイした時点で本番にも効く。DB への差し替え（#18〜）のときに、テストデータの扱いを決める
+
+**無料枠（2026-10-23 公式で確認）：** private リポジトリは月 **2,000分**。使い切っても、支払い方法が登録されていなければ止まるだけで課金されない。1回あたり1分弱（フロント約32秒、Edge Function 約13秒）なので、十分に収まる
+
+**使った部品の版：** `actions/checkout@v7`、`actions/setup-node@v7`、`denoland/setup-deno@v2`（Deno 2.x）
+
+**手元で Edge Function の型チェックをしたいとき（Deno を入れずに Docker で）：**
+```bash
+# 一時フォルダにコピーしてから（deno.lock がリポジトリにできないように）
+docker run --rm -v "$PWD:/app" -w /app denoland/deno:2.9.8 deno check index.ts
+```
+
+**未確認：** private リポジトリの無料プランで「CI が ✅ にならないとマージできない」設定（ブランチ保護）が使えるか。使えなくても、PR に結果が出るだけで十分役に立つ
