@@ -15,12 +15,15 @@ push は明示的に「プッシュして」と言われるまで実行しない
 ### 2. コミットの粒度は「1画面1機能」
 機能や画面が1つ完成したらコミットする。まとめて大きなコミットにしない。
 
-### 3. ブランチ運用：develop で実装 → ローカル検証 → main にマージ
-- 実装は **develop ブランチ**で行う。**main に直接コミットしない**
+### 3. ブランチ運用：Issue ごとのブランチ → develop → main（2026-10-24〜）
+- 実装は **develop から切った Issue ごとのブランチ**で行う（`feature/番号-短い英語`、不具合は `fix/番号-…`）
+- できたら **develop へ PR**（`Closes #番号`）。CI が通ってからマージ
+- リリースのときに **develop → main の PR**。**main に直接コミットしない**
 - 作業前に `git branch --show-current` で今いるブランチを確認する
-- ローカル（`npm run dev` / `npm run build` → `npm run preview`）で確認してから main にマージする
+- ローカル（`npm run dev` / `npm run build` → `npm run preview`）で確認してから PR を出す
 - **main への push は本番デプロイに直結する**（Cloudflare Pages：https://recipe-dph.pages.dev）。
   マージと push はルール1のとおり承認を得てから
+- HANDOFF.md や CLAUDE.md だけの小さい記録は、develop に直接コミットしてよい
 
 ### 4. 改修時は必ず方針確認を先に行うこと
 1. 現状確認・原因特定 → 方針をユーザーに提示
