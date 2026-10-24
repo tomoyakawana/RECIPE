@@ -1,10 +1,11 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 import RequireAuth from './components/common/RequireAuth';
 import MainLayout from './components/layout/MainLayout';
 import { AuthProvider } from './contexts/AuthProvider';
-import { MockStoreProvider } from './contexts/MockStoreProvider';
 import { ToastProvider } from './contexts/ToastProvider';
+import { queryClient } from './utils/queryClient';
 
 // ログイン
 import LoginPage from './pages/Login';
@@ -14,7 +15,7 @@ import RecipeListPage from './pages/RecipeList';
 import RecipeDetailPage from './pages/RecipeDetail';
 import RecipeFormPage from './pages/RecipeForm';
 
-// 今週作る
+// リクエスト（URL・フォルダ名は「今週作る」だった頃の todo のまま）
 import TodoPage from './pages/Todo';
 
 // メモ（買い物リスト・共有メモ）
@@ -29,8 +30,9 @@ import SettingsPage from './pages/Settings';
 const App = () => {
   return (
     <ToastProvider>
-      <AuthProvider>
-        <MockStoreProvider>
+      {/* DB から読んだデータの置き場。ログアウト時に中身を消すので、AuthProvider より外側に置く */}
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <BrowserRouter>
             <Routes>
               {/* ログイン画面（レイアウトなし・ログイン不要） */}
@@ -52,8 +54,8 @@ const App = () => {
               </Route>
             </Routes>
           </BrowserRouter>
-        </MockStoreProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ToastProvider>
   );
 };

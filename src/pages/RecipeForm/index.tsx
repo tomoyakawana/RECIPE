@@ -1,10 +1,12 @@
 import { useState, type SubmitEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import AiImport from '../../components/common/AiImport';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
 import TagSelector from '../../components/common/TagSelector';
-import { useMockStore } from '../../hooks/useMockStore';
+import { useRecipe, useRecipes, useSaveRecipe } from '../../hooks/useRecipes';
 import { useToast } from '../../hooks/useToast';
-import type { Ingredient, Recipe } from '../../types/recipe';
+import type { Ingredient, Recipe, RecipeInput } from '../../types/recipe';
 import type { RecipeDraft } from '../../utils/parseRecipe';
 
 // 入力欄の共通スタイル（iOS の自動ズームを避けるため text-base = 16px）
@@ -24,7 +26,9 @@ const normalizeTitle = (title: string) => title.normalize('NFKC').replace(/\s+/g
  */
 const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const navigate = useNavigate();
-  const { recipes, addRecipe, updateRecipe } = useMockStore();
+  // 今あるレシピ（タグの選択肢と、料理名の重複確認に使う）。読めていなければ空として扱う
+  const { data: recipes = [] } = useRecipes();
+  const saveRecipe = useSaveRecipe();
   const toast = useToast();
 
   // 今あるレシピに付いているタグ（重複なし）。タグの選択肢と、AI に「なるべくこれを使って」と渡す一覧に使う
@@ -76,15 +80,16 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     setSteps(prev => (prev.length === 1 ? [''] : prev.filter((_, idx) => idx !== i)));
   };
 
-  const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    // 保存中にもう一度送られたら何もしない（ボタンは押せなくしてあるが、Enter キーでも送れるため）
+    if (!title.trim() || saveRecipe.isPending) return;
 
     // 同じ料理名のレシピがすでにあれば確認する（編集中の自分自身とは比べない）
     // 「肉じゃが（甘め）」のように同じ料理の別レシピもありうるので、止めずに確認だけにする
     const duplicated = recipes.some(r => r.id !== recipe?.id && normalizeTitle(r.title) === normalizeTitle(title));
     if (duplicated && !window.confirm(`「${title.trim()}」という名前のレシピがすでにあります。このまま保存しますか？`)) return;
-    const input = {
+    const input: RecipeInput = {
       title      : title.trim(),
       // 空欄なら undefined（＝項目なし）にする
       cookMinutes: cookMinutes ? Number(cookMinutes) : undefined,
@@ -95,15 +100,15 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       steps      : steps.map(st => st.trim()).filter(Boolean),
       sourceUrl  : sourceUrl.trim() || undefined,
     };
-    if (isEdit) {
-      updateRecipe(recipe.id, input);
+
+    try {
+      // 保存して、一覧を読み直すまで待つ。失敗したら catch へ（トーストは useSaveRecipe が出す）
+      const id = await saveRecipe.mutateAsync({ recipeId: recipe?.id ?? null, input });
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
-      navigate(`/recipes/${recipe.id}`, { replace: true });
-      toast.success('レシピを更新しました');
-    } else {
-      const id = addRecipe(input);
       navigate(`/recipes/${id}`, { replace: true });
-      toast.success('レシピを追加しました');
+      toast.success(isEdit ? 'レシピを更新しました' : 'レシピを追加しました');
+    } catch {
+      // 失敗したときは画面を移らず、入力した内容をそのまま残す
     }
   };
 
@@ -120,17 +125,17 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-bold">料理名 <span className="text-red-500">*</span></label>
-          <input value={title} onChange={e => setTitle(e.target.value)} required className={INPUT_CLASS} placeholder="例：豚の生姜焼き" />
+          <input value={title} onChange={e => setTitle(e.target.value)} required maxLength={100} className={INPUT_CLASS} placeholder="例：豚の生姜焼き" />
         </div>
 
         <div className="flex gap-3">
           <div className="flex-1">
             <label className="mb-1 block text-sm font-bold">調理時間（分）</label>
-            <input type="number" inputMode="numeric" value={cookMinutes} onChange={e => setCookMinutes(e.target.value)} className={INPUT_CLASS} />
+            <input type="number" inputMode="numeric" min={1} value={cookMinutes} onChange={e => setCookMinutes(e.target.value)} className={INPUT_CLASS} />
           </div>
           <div className="flex-1">
             <label className="mb-1 block text-sm font-bold">何人分</label>
-            <input type="number" inputMode="numeric" value={servings} onChange={e => setServings(e.target.value)} className={INPUT_CLASS} />
+            <input type="number" inputMode="numeric" min={1} value={servings} onChange={e => setServings(e.target.value)} className={INPUT_CLASS} />
           </div>
         </div>
 
@@ -144,7 +149,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
           <div className="space-y-2">
             {ingredients.map((ing, i) => (
               <div key={i} className="flex items-center gap-2">
-                <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-[2]`} placeholder="材料" />
+                <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} maxLength={100} className={`${INPUT_CLASS} min-w-0 flex-[2]`} placeholder="材料" />
                 <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-1`} placeholder="分量" />
                 <button
                   type="button"
@@ -207,8 +212,12 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
         </div>
       </div>
 
-      <button type="submit" className="mt-6 min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30">
-        保存する
+      <button
+        type="submit"
+        disabled={saveRecipe.isPending}
+        className="mt-6 min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:opacity-50"
+      >
+        {saveRecipe.isPending ? '保存中…' : '保存する'}
       </button>
     </form>
   );
@@ -220,11 +229,13 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
  */
 const RecipeFormPage = () => {
   const { id } = useParams();
-  const { recipes } = useMockStore();
+  // 編集のときだけ使う（追加のときは id がないので undefined が返る）
+  const { data: recipe, isPending, error, refetch } = useRecipe(id);
 
   if (id === undefined) return <RecipeForm key="new" />;
 
-  const recipe = recipes.find(r => r.id === id);
+  if (isPending) return <Loading />;
+  if (error) return <LoadError error={error} onRetry={() => refetch()} />;
   if (!recipe) {
     return (
       <div className="py-10 text-center">

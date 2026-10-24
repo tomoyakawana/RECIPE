@@ -1,16 +1,18 @@
 {
   "name": "recipe-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:types": "supabase gen types typescript --linked --schema public > src/types/database.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
+    "@tanstack/react-query": "^5.104.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.4.0"

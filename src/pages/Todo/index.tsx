@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
 import MonthCalendar from '../../components/common/MonthCalendar';
-import { useMockStore } from '../../hooks/useMockStore';
+import { useRecipes } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
+import { useMarkCooked, useRemoveTodo, useSetPlannedOn, useTodoItems } from '../../hooks/useTodo';
+import { useToast } from '../../hooks/useToast';
+import { dbErrorMessage } from '../../utils/dbError';
 import type { Recipe } from '../../types/recipe';
 import type { TodoItem } from '../../types/todo';
 import { addDays, fmtYmd, todayYmd } from '../../utils/date';
@@ -39,10 +45,12 @@ type CardProps = {
   onDate   : (v: string | undefined) => void;
   onRemove : () => void;
   onCooked : () => void;
+  // 保存中は「作った！」「✕」を押せなくする（二重に押されるのを防ぐ）
+  busy     : boolean;
 };
 
 // 上の段：料理名と ✕／下の段：予定日と「作った！」（狭い iPhone でも料理名が切れにくいように2段にする）
-const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
+const TodoCard = ({ item, recipe, onDate, onRemove, onCooked, busy }: CardProps) => (
   <li className="flex gap-3 rounded-2xl bg-white p-2.5 shadow-sm shadow-stone-900/5">
     <Link to={`/recipes/${recipe.id}`} className="shrink-0">
       <ImagePlaceholder tags={recipe.tags} className="size-18 rounded-xl" emojiSize="text-3xl" />
@@ -52,7 +60,7 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
         <div className="min-w-0 flex-1 pt-1">
           <Link to={`/recipes/${recipe.id}`} className="block truncate font-bold">{recipe.title}</Link>
           {/* レシピのひとことメモ（作るときに思い出せるように、1行だけ小さく） */}
-          {item.requested && (
+          {item.requestedBy && (
             <span className="mt-0.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">🙋 食べたい！</span>
           )}
           {recipe.note && <p className="truncate text-xs text-stone-500">💬 {recipe.note}</p>}
@@ -60,6 +68,7 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
         <button
           type="button"
           onClick={onRemove}
+          disabled={busy}
           aria-label="リストから外す"
           className="-mt-1 -mr-1 flex size-9 shrink-0 items-center justify-center rounded-full text-sm text-stone-400"
         >
@@ -68,7 +77,12 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
       </div>
       <div className="flex items-center justify-between gap-2">
         <DatePill value={item.plannedOn} onChange={onDate} />
-        <button type="button" onClick={onCooked} className="min-h-9 shrink-0 rounded-full bg-brand px-4 text-sm font-bold text-white">
+        <button
+          type="button"
+          onClick={onCooked}
+          disabled={busy}
+          className="min-h-9 shrink-0 rounded-full bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+        >
           作った！
         </button>
       </div>
@@ -77,16 +91,31 @@ const TodoCard = ({ item, recipe, onDate, onRemove, onCooked }: CardProps) => (
 );
 
 const TodoPage = () => {
-  const { todo, recipes, setPlannedOn, markCooked, removeFromTodo, secretMode } = useMockStore();
+  const todoQuery    = useTodoItems();
+  const recipesQuery = useRecipes();
+  const setPlannedOn = useSetPlannedOn();
+  const markCooked   = useMarkCooked();
+  const removeTodo   = useRemoveTodo();
+  const toast        = useToast();
+  const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
   const [notice, setNotice]     = useState('');
 
   // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
   if (secretMode) return <Navigate to="/" replace />;
 
+  // リクエストとレシピの両方が読めてから表示する
+  if (todoQuery.isPending || recipesQuery.isPending) return <Loading />;
+  if (todoQuery.isError || recipesQuery.isError) {
+    return <LoadError error={todoQuery.error ?? recipesQuery.error} onRetry={() => { todoQuery.refetch(); recipesQuery.refetch(); }} />;
+  }
+  // ここまで来れば両方とも読めている。isPending・isError を1つずつ確かめたので、TS も data があると分かる（型の絞り込み）
+  const todo    = todoQuery.data;
+  const recipes = recipesQuery.data;
+
   const today = todayYmd();
 
-  // レシピが消えていた場合（DB につないだら起こりうる）は表示しない
+  // レシピが消えていた（論理削除された）場合は表示しない
   // `flatMap` で「見つかったものだけ」を { item, recipe } の組にする
   const rows = todo.flatMap(item => {
     const recipe = recipes.find(r => r.id === item.recipeId);
@@ -110,9 +139,18 @@ const TodoPage = () => {
   }
 
   const handleDate = (todoId: string, value: string | undefined) => {
-    const ok = setPlannedOn(todoId, value);
-    setNotice(ok ? '' : 'その日にはすでに同じレシピが入っています');
+    setPlannedOn.mutate({ todoId, plannedOn: value }, {
+      onSuccess: () => setNotice(''),
+      // 同じ日に同じ料理がある（DB の一意制約 23505）ときは、画面の中で知らせる。それ以外はトースト
+      onError  : error => {
+        if ((error as { code?: string }).code === '23505') setNotice('その日にはすでに同じレシピが入っています');
+        else toast.error(dbErrorMessage(error));
+      },
+    });
   };
+
+  // 「作った！」「✕」の保存中は、どのカードのボタンも押せなくする
+  const busy = markCooked.isPending || removeTodo.isPending;
 
   // カレンダーの日付をタップ → その日の予定までスクロール
   const handleSelect = (ymd: string) => {
@@ -131,8 +169,9 @@ const TodoPage = () => {
           item={item}
           recipe={recipe}
           onDate={v => handleDate(item.id, v)}
-          onRemove={() => removeFromTodo(item.id)}
-          onCooked={() => markCooked(item.id)}
+          onRemove={() => removeTodo.mutate(item.id)}
+          onCooked={() => markCooked.mutate(item.id)}
+          busy={busy}
         />
       ))}
     </ul>

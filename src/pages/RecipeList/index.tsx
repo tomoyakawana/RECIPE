@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
-import { useMockStore } from '../../hooks/useMockStore';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
+import { useAuth } from '../../hooks/useAuth';
+import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
+import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd, todayYmd } from '../../utils/date';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
@@ -12,7 +17,14 @@ const QUICK = '⏱ 20分以内';
 const QUICK_MINUTES = 20;
 
 const RecipeListPage = () => {
-  const { recipes, todo, toggleFavorite, addToTodo, requestRecipe, secretMode } = useMockStore();
+  const { data: recipes = [], isPending, error, refetch } = useRecipes();
+  const { data: todo = [] } = useTodoItems();
+  const toggleFavorite = useToggleFavorite();
+  const addToTodo      = useAddTodo();
+  const requestRecipe  = useRequestRecipe();
+  // ログイン中の自分（「食べたい！」したのが自分かどうかを見る）
+  const myId = useAuth().session?.user.id;
+  const secretMode = useSecretMode();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 
@@ -28,11 +40,11 @@ const RecipeListPage = () => {
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
 
-  // 「日付未定」でリクエストに入っているレシピの id（ボタンの表示切り替え用）
-  // 日付が決まっているものは別の日にもう一度入れられるので、未定のものだけ見る
-  const undatedRecipeIds = new Set(todo.filter(t => !t.plannedOn).map(t => t.recipeId));
+  // リクエストに入っているレシピの id（ボタンの表示切り替え用）
+  // 日付があってもなくても「済み」。「作った！」か ✕ で外れたら、また「＋ リクエスト」に戻る（#6 で変更）
+  const inTodoRecipeIds = new Set(todo.map(t => t.recipeId));
   // シークレットモードでは、自分が「食べたい！」したものだけを見る（奥さんの予定は見せない）
-  const requestedRecipeIds = new Set(todo.filter(t => t.requested).map(t => t.recipeId));
+  const requestedRecipeIds = new Set(todo.filter(t => t.requestedBy === myId).map(t => t.recipeId));
 
   return (
     <>
@@ -80,7 +92,10 @@ const RecipeListPage = () => {
         ))}
       </div>
 
-      {filtered.length === 0 && <p className="py-10 text-center text-stone-500">該当するレシピがありません</p>}
+      {isPending && <Loading />}
+      {error && <LoadError error={error} onRetry={() => refetch()} />}
+
+      {!isPending && !error && filtered.length === 0 && <p className="py-10 text-center text-stone-500">該当するレシピがありません</p>}
 
       {/* 写真が主役のカード。iPhone は2列、PC は3列 */}
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
@@ -92,7 +107,7 @@ const RecipeListPage = () => {
               </Link>
               <button
                 type="button"
-                onClick={() => toggleFavorite(r.id)}
+                onClick={() => toggleFavorite.mutate({ recipeId: r.id, isFavorite: !r.isFavorite })}
                 aria-label="お気に入り"
                 className={`absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-white/80 text-lg backdrop-blur ${
                   r.isFavorite ? 'text-amber-400' : 'text-stone-300'
@@ -114,21 +129,23 @@ const RecipeListPage = () => {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => requestRecipe(r.id)}
-                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                    onClick={() => requestRecipe.mutate(r.id)}
+                    disabled={requestRecipe.isPending}
+                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                   >
                     🙋 食べたい！
                   </button>
                 )
-              ) : undatedRecipeIds.has(r.id) ? (
+              ) : inTodoRecipeIds.has(r.id) ? (
                 <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
                   ✓ リクエスト済み
                 </p>
               ) : (
                 <button
                   type="button"
-                  onClick={() => addToTodo(r.id)}
-                  className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                  onClick={() => addToTodo.mutate(r.id)}
+                  disabled={addToTodo.isPending}
+                  className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                 >
                   ＋ リクエスト
                 </button>

@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
-import { useMockStore } from '../../hooks/useMockStore';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
+import { useAuth } from '../../hooks/useAuth';
+import { useCookedDates, useRecipe, useToggleFavorite, useUpdateNote } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
+import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd } from '../../utils/date';
 
 /* ---- ひとことメモ（タップしてその場で書ける） ---- */
-const RecipeNote = ({ note, onSave }: { note?: string; onSave: (v: string) => void }) => {
+type RecipeNoteProps = {
+  note?  : string;
+  // 保存できたら true。失敗したら編集中のまま残す（書いた内容を消さない）
+  onSave : (v: string) => Promise<boolean>;
+  saving : boolean;
+};
+
+const RecipeNote = ({ note, onSave, saving }: RecipeNoteProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft]     = useState('');
 
@@ -14,9 +26,8 @@ const RecipeNote = ({ note, onSave }: { note?: string; onSave: (v: string) => vo
     setEditing(true);
   };
 
-  const save = () => {
-    onSave(draft);
-    setEditing(false);
+  const save = async () => {
+    if (await onSave(draft)) setEditing(false);
   };
 
   if (editing) {
@@ -35,8 +46,13 @@ const RecipeNote = ({ note, onSave }: { note?: string; onSave: (v: string) => vo
           <button type="button" onClick={() => setEditing(false)} className="min-h-9 px-3 text-sm text-stone-500">
             キャンセル
           </button>
-          <button type="button" onClick={save} className="min-h-9 rounded-full bg-brand px-4 text-sm font-bold text-white">
-            保存
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="min-h-9 rounded-full bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {saving ? '保存中…' : '保存'}
           </button>
         </div>
       </div>
@@ -63,9 +79,18 @@ const RecipeDetailPage = () => {
   // URL の /recipes/:id の :id 部分。見つからない可能性もあるので型は string | undefined
   const { id } = useParams();
   const navigate = useNavigate();
-  const { recipes, todo, history, toggleFavorite, addToTodo, requestRecipe, secretMode, setRecipeNote } = useMockStore();
+  const { data: recipe, isPending, error, refetch } = useRecipe(id);
+  const { data: cookedDates = [] } = useCookedDates(id);
+  const toggleFavorite = useToggleFavorite();
+  const updateNote     = useUpdateNote();
+  const { data: todo = [] } = useTodoItems();
+  const addToTodo      = useAddTodo();
+  const requestRecipe  = useRequestRecipe();
+  const myId = useAuth().session?.user.id;
+  const secretMode = useSecretMode();
 
-  const recipe = recipes.find(r => r.id === id);
+  if (isPending) return <Loading />;
+  if (error) return <LoadError error={error} onRetry={() => refetch()} />;
   if (!recipe) {
     return (
       <div className="py-10 text-center">
@@ -75,16 +100,11 @@ const RecipeDetailPage = () => {
     );
   }
 
-  // 日付未定で入っていれば「追加済み」。日付が決まっているものとは別に、もう一度追加できる
-  const inTodo = todo.some(t => t.recipeId === recipe.id && !t.plannedOn);
+  // リクエストに入っていれば、日付があってもなくても「済み」（#6 で変更。外れたらまた追加できる）
+  const inTodo = todo.some(t => t.recipeId === recipe.id);
   // シークレットモード：自分が「食べたい！」したかだけを見る
-  const requested = todo.some(t => t.recipeId === recipe.id && t.requested);
+  const requested = todo.some(t => t.recipeId === recipe.id && t.requestedBy === myId);
   const done      = secretMode ? requested : inTodo;
-  // このレシピを作った記録（新しい順）
-  const cookedDates = history
-    .filter(h => h.recipeId === recipe.id)
-    .map(h => h.cookedOn)
-    .sort((a, b) => b.localeCompare(a));
 
   return (
     <article>
@@ -101,7 +121,7 @@ const RecipeDetailPage = () => {
         </button>
         <button
           type="button"
-          onClick={() => toggleFavorite(recipe.id)}
+          onClick={() => toggleFavorite.mutate({ recipeId: recipe.id, isFavorite: !recipe.isFavorite })}
           aria-label="お気に入り"
           className={`absolute top-4 right-4 flex size-11 items-center justify-center rounded-full bg-white/85 text-xl shadow backdrop-blur ${
             recipe.isFavorite ? 'text-amber-400' : 'text-stone-300'
@@ -127,7 +147,13 @@ const RecipeDetailPage = () => {
       </div>
 
       {/* key：別のレシピに移ったとき、編集中の状態を持ち越さないようにする */}
-      <RecipeNote key={recipe.id} note={recipe.note} onSave={v => setRecipeNote(recipe.id, v)} />
+      <RecipeNote
+        key={recipe.id}
+        note={recipe.note}
+        saving={updateNote.isPending}
+        // mutateAsync：保存が終わるまで待てる版。失敗すると例外になる（トーストは useUpdateNote が出す）
+        onSave={v => updateNote.mutateAsync({ recipeId: recipe.id, note: v }).then(() => true, () => false)}
+      />
 
       {/* 数字の情報をタイルで */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
@@ -185,13 +211,13 @@ const RecipeDetailPage = () => {
       <div className="sticky bottom-24 md:static">
         <button
           type="button"
-          disabled={done}
-          onClick={() => (secretMode ? requestRecipe(recipe.id) : addToTodo(recipe.id))}
+          disabled={done || addToTodo.isPending || requestRecipe.isPending}
+          onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate(recipe.id))}
           className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode
             ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')
-            : (done ? '✓ リクエスト済み（日付未定）' : '＋ リクエストに追加')}
+            : (done ? '✓ リクエスト済み' : '＋ リクエストに追加')}
         </button>
       </div>
     </article>

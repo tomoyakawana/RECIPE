@@ -7,8 +7,8 @@ export type Ingredient = {
 /**
  * レシピ 1件分の形
  *
- * モックの段階なので、画面に必要な項目から逆算して置いている。
- * DB（Supabase）を作るときは、この型をテーブル設計の下書きとして使う。
+ * 画面で使う形（camelCase）。DB の行（snake_case）からの変換は src/api/recipes.ts で行う。
+ * もともとはモックの段階で画面から逆算した形で、DB のテーブル設計の下書きにも使った。
  */
 export type Recipe = {
   id          : string;
