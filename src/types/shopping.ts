@@ -5,6 +5,6 @@ export type ShoppingItem = {
   amount?  : string;
   // 買ったらチェック
   checked  : boolean;
-  // 「今週作るの材料から追加」で入ったときの、元のレシピ（手入力なら無し）
+  // 「リクエストの材料から追加」で入ったときの、元のレシピ（手入力なら無し）
   recipeId?: string;
 };

@@ -825,6 +825,8 @@ docker run --rm -v "$PWD:/app" -w /app denoland/deno:2.9.8 deno check index.ts
 ### モックの片付け
 Issue #3 の「名前から `Mock` を外す」は、**改名ではなく、#4〜#9 で画面を差し替えるたびにモックの中身を減らし、最後に `MockStoreProvider`・`src/mocks/` を削除する**形に読み替えた。
 
+**#30 で削除済み（2026-10-24）**：`MockStoreProvider`・`mockStore`・`useMockStore`・`src/mocks/` を消し、`src/` にモックは残っていない。ローカル用にも残さない（開発中もローカルから本番と同じ Supabase につなぐため、モックで動かす場面がない。必要になれば Git の履歴から戻せる）。モックのレシピ6品は、確認用のデータとして DB に入れてある（#33 で消す）
+
 ### バージョン
 `@tanstack/react-query` 5.104.5（2026-10-24 導入）
 
