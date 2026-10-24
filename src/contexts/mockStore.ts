@@ -1,7 +1,6 @@
 import { createContext } from 'react';
 import type { HistoryEntry } from '../types/history';
 import type { Recipe, RecipeInput } from '../types/recipe';
-import type { ShoppingItem } from '../types/shopping';
 
 /**
  * モック用のデータ置き場の「形」
@@ -12,9 +11,6 @@ import type { ShoppingItem } from '../types/shopping';
 export type MockStore = {
   recipes : Recipe[];
   history : HistoryEntry[];
-  shopping: ShoppingItem[];
-  // 夫婦で共有するメモ（1枚）
-  note    : string;
   // シークレットモード（オンのとき「リクエスト」を表示しない。予定を見ないためのモード）
   // ※ 本来はユーザーごとの設定として DB に保存する。モックの間はメモリ上だけ（リロードでオフに戻る）
   secretMode: boolean;
@@ -26,15 +22,7 @@ export type MockStore = {
   updateRecipe  : (recipeId: string, input: RecipeInput) => void;
   // ひとことメモを書き換える（空文字なら消す）
   setRecipeNote : (recipeId: string, note: string) => void;
-
-  // ---- 買い物・メモ ----
-  addShoppingItem     : (name: string, amount?: string) => void;
-  toggleShoppingItem  : (itemId: string) => void;
-  removeShoppingItem  : (itemId: string) => void;
-  // チェック済み（買ったもの）をまとめて消す
-  clearCheckedShopping: () => void;
-  setNote             : (note: string) => void;
-  setSecretMode       : (on: boolean) => void;
+  setSecretMode : (on: boolean) => void;
 };
 
 // Provider の外で使われたら null になる（useMockStore でチェックする）
