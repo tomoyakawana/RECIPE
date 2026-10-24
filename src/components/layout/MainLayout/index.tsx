@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
-import { useMockStore } from '../../../hooks/useMockStore';
+import { useSecretModeQuery } from '../../../hooks/useSettings';
+import LoadError from '../../common/LoadError';
+import Loading from '../../common/Loading';
 
 // 下タブ（iPhone）／上メニュー（PC）に並べる画面
 // match：今の URL がこのタブに属するかの判定（レシピ詳細・追加も「レシピ」タブ扱いにする）
@@ -18,7 +20,12 @@ const NAV_ITEMS = [
  */
 const MainLayout = () => {
   const { pathname } = useLocation();
-  const { secretMode } = useMockStore();
+  const { data: secretMode, isPending, error, refetch } = useSecretModeQuery();
+
+  // シークレットモードの設定を読み終わるまでは、タブも画面も出さない
+  // （読み込み中をオフとして扱うと、開いた一瞬だけ「リクエスト」タブや相手の予定が見えてしまうため）
+  if (isPending) return <div className="min-h-dvh pt-24"><Loading /></div>;
+  if (error) return <div className="min-h-dvh px-4 pt-24"><LoadError error={error} onRetry={() => refetch()} /></div>;
 
   // シークレットモードのときは「リクエスト」のタブを出さない
   const items = secretMode ? NAV_ITEMS.filter(item => item.to !== '/todo') : NAV_ITEMS;

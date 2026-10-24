@@ -4,8 +4,8 @@ import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import MonthCalendar from '../../components/common/MonthCalendar';
-import { useMockStore } from '../../hooks/useMockStore';
 import { useRecipes } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
 import { useMarkCooked, useRemoveTodo, useSetPlannedOn, useTodoItems } from '../../hooks/useTodo';
 import { useToast } from '../../hooks/useToast';
 import { dbErrorMessage } from '../../utils/dbError';
@@ -97,8 +97,7 @@ const TodoPage = () => {
   const markCooked   = useMarkCooked();
   const removeTodo   = useRemoveTodo();
   const toast        = useToast();
-  // シークレットモードは #9 までモックのまま
-  const { secretMode } = useMockStore();
+  const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
   const [notice, setNotice]     = useState('');
 

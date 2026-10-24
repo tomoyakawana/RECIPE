@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
-import { useMockStore } from '../../hooks/useMockStore';
+import { useSecretMode, useSetSecretMode } from '../../hooks/useSettings';
 
 /* ---- 設定のまとまり（白いカード + 見出し） ---- */
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -29,7 +29,8 @@ const APP_VERSION = __APP_VERSION__.split('.').slice(0, 2).join('.');
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { session, signOut } = useAuth();
-  const { secretMode, setSecretMode } = useMockStore();
+  const secretMode    = useSecretMode();
+  const setSecretMode = useSetSecretMode();
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -58,7 +59,7 @@ const SettingsPage = () => {
               role="switch"
               aria-checked={secretMode}
               aria-label="シークレットモード"
-              onClick={() => setSecretMode(!secretMode)}
+              onClick={() => setSecretMode.mutate(!secretMode)}
               className={`relative h-8 w-13 rounded-full transition-colors ${secretMode ? 'bg-brand' : 'bg-stone-300'}`}
             >
               <span

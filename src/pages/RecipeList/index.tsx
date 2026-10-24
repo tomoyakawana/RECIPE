@@ -4,8 +4,8 @@ import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
-import { useMockStore } from '../../hooks/useMockStore';
 import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd, todayYmd } from '../../utils/date';
 
@@ -24,8 +24,7 @@ const RecipeListPage = () => {
   const requestRecipe  = useRequestRecipe();
   // ログイン中の自分（「食べたい！」したのが自分かどうかを見る）
   const myId = useAuth().session?.user.id;
-  // シークレットモードは #9 までモックのまま
-  const { secretMode } = useMockStore();
+  const secretMode = useSecretMode();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 

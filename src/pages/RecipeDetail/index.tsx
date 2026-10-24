@@ -4,8 +4,8 @@ import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
-import { useMockStore } from '../../hooks/useMockStore';
 import { useCookedDates, useRecipe, useToggleFavorite, useUpdateNote } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd } from '../../utils/date';
 
@@ -87,8 +87,7 @@ const RecipeDetailPage = () => {
   const addToTodo      = useAddTodo();
   const requestRecipe  = useRequestRecipe();
   const myId = useAuth().session?.user.id;
-  // シークレットモードは #9 までモックのまま
-  const { secretMode } = useMockStore();
+  const secretMode = useSecretMode();
 
   if (isPending) return <Loading />;
   if (error) return <LoadError error={error} onRetry={() => refetch()} />;

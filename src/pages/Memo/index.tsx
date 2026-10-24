@@ -1,8 +1,8 @@
 import { useEffect, useState, type SubmitEvent } from 'react';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
-import { useMockStore } from '../../hooks/useMockStore';
 import { useRecipes } from '../../hooks/useRecipes';
+import { useSecretMode } from '../../hooks/useSettings';
 import {
   useAddShoppingItem, useAddTodoIngredients, useClearChecked, useRemoveShoppingItem,
   useSaveSharedNote, useSharedNote, useShoppingItems, useToggleChecked,
@@ -20,8 +20,7 @@ const ShoppingList = () => {
   const { data: shopping, isPending, error, refetch } = useShoppingItems();
   const { data: recipes = [] } = useRecipes();
   const { data: todo = [] } = useTodoItems();
-  // シークレットモードは #9 までモックのまま
-  const { secretMode } = useMockStore();
+  const secretMode = useSecretMode();
 
   const addItem        = useAddShoppingItem();
   const toggleChecked  = useToggleChecked();
