@@ -735,3 +735,39 @@ docker run --rm -v "$PWD:/app" -w /app denoland/deno:2.9.8 deno check index.ts
 **経緯（反省）：** それまではテスト SQL を Claude の一時フォルダに置いていたが、**日が経って一時フォルダごと消え**、#18 の検証の準備ができなかった。そこでリポジトリに入れ、「目で見て判断」から「自動で合否が出る」形に書き直した。書き直した直後、**わざと失敗するテストを入れても「すべて通りました」と出るバグ**が見つかった（パイプの後ろの `|| true` で psql の終了コードを見失っていた）。テストの仕組み自体も、わざと失敗させて確かめること
 
 **マイグレーションを足したら：** 対応するテストを `supabase/tests/` に足し、`run.sh` が通ってからコミットする
+
+---
+
+## 22. DB とのつなぎ方（#3、2026-10-24 決定）
+
+### 採用：TanStack Query（旧 React Query）
+モックの `MockStoreProvider`（1つの大きな Context）を Supabase 版に書き換えるのではなく、**TanStack Query** で DB のデータを扱う。
+
+| 理由 | 中身 |
+|---|---|
+| 読み込み中・エラーを自分で持たなくてよい | `isPending`・`error`・`refetch` をライブラリが持つ。画面ごとに useState を書かない |
+| **#23（アプリに戻ったときの読み直し）がほぼ標準で入る** | `refetchOnWindowFocus`：画面が表示に戻ったら、古くなったデータを読み直す。ホーム画面から開いた PWA で実際に効くかは、#4 の後に iPhone で確認する（まだ確認していない） |
+| 画面ごとに少しずつ差し替えられる | 使う画面だけ `useRecipes()` などに替える。差し替えが終わるまで、ほかの画面はモックのまま動く |
+| 現場での使われ方 | React でサーバーのデータを扱うときの定番のひとつ |
+
+不採用：Context を Supabase 版に書き換える（B）。小さいアプリなら成り立つが、読み込み中・エラー・読み直しを全部自分で書くことになり、一度に全画面を替える形になりがちなため。
+
+### 置き場所と決まりごと
+| もの | 場所 | 中身 |
+|---|---|---|
+| 設定 | `src/utils/queryClient.ts` | `staleTime` 30秒（画面を行き来するたびには読まない）、`retry` 1回、`refetchOnWindowFocus` |
+| DB の型 | `src/types/database.ts` | **自動生成。手で直さない**。マイグレーションを本番に反映したら `npm run gen:types` で作り直す（`--linked` で本番のスキーマから作る） |
+| テーブルごとの読み書き | `src/api/〇〇.ts`（#4 から） | DB を読む関数と、**DB の行（snake_case）→ 画面の型（camelCase）の変換**をここに置く。画面は今の型（`Recipe` など）のまま使える |
+| 読み込み中 | `components/common/Loading.tsx` | |
+| 読み込みの失敗 | `components/common/LoadError.tsx` | 「読み込めませんでした」＋もう一度読み込むボタン（`refetch` を渡す） |
+| 保存の失敗 | トーストの `error` | 文言は `utils/dbError.ts` の `dbErrorMessage()`。SQLSTATE（`23505` など）と通信エラーを日本語にする。DB 関数の `raise` の文言には id が入るので、そのままは出さない |
+
+- `createClient<Database>`：Supabase のクライアントに DB の型を渡し、列名の打ち間違いをビルドで気づけるようにした
+- **ログアウトしたら `queryClient.clear()`**（AuthProvider の `SIGNED_OUT`）。同じ端末で別の人がログインしたときに、前の人のデータ（設定など）を見せないため
+- キャッシュはメモリ上だけ。**ローカルストレージには保存しない**（CLAUDE.md「サーバーを正」）
+
+### モックの片付け
+Issue #3 の「名前から `Mock` を外す」は、**改名ではなく、#4〜#9 で画面を差し替えるたびにモックの中身を減らし、最後に `MockStoreProvider`・`src/mocks/` を削除する**形に読み替えた。
+
+### バージョン
+`@tanstack/react-query` 5.104.5（2026-10-24 導入）

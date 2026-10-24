@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { queryClient } from '../utils/queryClient';
 import { supabase } from '../utils/supabaseClient';
 import { AuthContext, type AuthState } from './authContext';
 
@@ -28,8 +29,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // ログイン・ログアウト・トークンの自動更新のたびに呼ばれる
-    const { data } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      // ログアウトしたら、読み込んだデータを捨てる（同じ端末で別の人がログインしたときに、前の人のデータを見せない）
+      if (event === 'SIGNED_OUT') queryClient.clear();
     });
 
     // 画面が消えるときに購読をやめる（やめないと二重に呼ばれ続ける）
