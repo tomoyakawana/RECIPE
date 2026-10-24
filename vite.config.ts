@@ -1,10 +1,19 @@
+import { readFileSync } from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// package.json の version（例：1.0.0）
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
+
 // https://vite.dev/config/
 export default defineConfig({
+  // ビルドのときに、アプリのコードの __APP_VERSION__ を package.json のバージョンに置き換える
+  // （バージョンを書くのは package.json の1か所だけにする。上げるのは本番に出すとき：HANDOFF 23 章）
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   plugins: [
     react(),
     // Tailwind CSS v4（設定ファイル不要。index.css の @import で読み込む）

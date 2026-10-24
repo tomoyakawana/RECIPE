@@ -22,6 +22,9 @@ const Row = ({ label, children, note }: { label: string; children?: ReactNode; n
   </div>
 );
 
+// 画面に出すバージョン。package.json は「1.0.0」の3つの数字なので、最初の2つだけ出す（1.0）
+const APP_VERSION = __APP_VERSION__.split('.').slice(0, 2).join('.');
+
 /** 設定画面 */
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -69,6 +72,7 @@ const SettingsPage = () => {
 
         <Section title="このアプリについて">
           <Row label="アプリ名">なに食べたい？</Row>
+          <Row label="バージョン">{APP_VERSION}</Row>
         </Section>
 
         <button
