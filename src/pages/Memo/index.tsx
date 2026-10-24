@@ -6,8 +6,8 @@ const INPUT_CLASS = 'min-h-11 rounded-xl border border-stone-200 bg-white px-3 t
 
 const MemoPage = () => {
   const {
-    shopping, note, recipes, todo, secretMode,
-    addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, addTodoIngredients, setNote,
+    shopping, note, recipes, secretMode,
+    addShoppingItem, toggleShoppingItem, removeShoppingItem, clearCheckedShopping, setNote,
   } = useMockStore();
 
   const [name,   setName]   = useState('');
@@ -22,9 +22,9 @@ const MemoPage = () => {
     setAmount('');
   };
 
+  // TODO(#7)：DB 関数 add_todo_ingredients_to_shopping() につなぐ。それまでボタンは押せない
   const handleAddFromTodo = () => {
-    const count = addTodoIngredients();
-    setNotice(count > 0 ? `${count}品を追加しました。家にあるものは ✕ で消してください` : '追加する材料はありませんでした');
+    setNotice('');
   };
 
   // まだ買っていないものを上、買ったものを下に
@@ -51,7 +51,7 @@ const MemoPage = () => {
           <button
             type="button"
             onClick={handleAddFromTodo}
-            disabled={todo.length === 0}
+            disabled
             className="mb-3 min-h-11 w-full rounded-full bg-brand/10 text-sm font-bold text-brand disabled:bg-stone-100 disabled:text-stone-400"
           >
             🙋 リクエストの材料から追加

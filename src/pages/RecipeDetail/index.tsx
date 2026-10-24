@@ -3,8 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
+import { useAuth } from '../../hooks/useAuth';
 import { useMockStore } from '../../hooks/useMockStore';
 import { useCookedDates, useRecipe, useToggleFavorite, useUpdateNote } from '../../hooks/useRecipes';
+import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd } from '../../utils/date';
 
 /* ---- ひとことメモ（タップしてその場で書ける） ---- */
@@ -81,8 +83,12 @@ const RecipeDetailPage = () => {
   const { data: cookedDates = [] } = useCookedDates(id);
   const toggleFavorite = useToggleFavorite();
   const updateNote     = useUpdateNote();
-  // リクエスト（todo）とシークレットモードは、#6・#9 までモックのまま
-  const { todo, addToTodo, requestRecipe, secretMode } = useMockStore();
+  const { data: todo = [] } = useTodoItems();
+  const addToTodo      = useAddTodo();
+  const requestRecipe  = useRequestRecipe();
+  const myId = useAuth().session?.user.id;
+  // シークレットモードは #9 までモックのまま
+  const { secretMode } = useMockStore();
 
   if (isPending) return <Loading />;
   if (error) return <LoadError error={error} onRetry={() => refetch()} />;
@@ -95,10 +101,10 @@ const RecipeDetailPage = () => {
     );
   }
 
-  // 日付未定で入っていれば「追加済み」。日付が決まっているものとは別に、もう一度追加できる
-  const inTodo = todo.some(t => t.recipeId === recipe.id && !t.plannedOn);
+  // リクエストに入っていれば、日付があってもなくても「済み」（#6 で変更。外れたらまた追加できる）
+  const inTodo = todo.some(t => t.recipeId === recipe.id);
   // シークレットモード：自分が「食べたい！」したかだけを見る
-  const requested = todo.some(t => t.recipeId === recipe.id && t.requested);
+  const requested = todo.some(t => t.recipeId === recipe.id && t.requestedBy === myId);
   const done      = secretMode ? requested : inTodo;
 
   return (
@@ -206,13 +212,13 @@ const RecipeDetailPage = () => {
       <div className="sticky bottom-24 md:static">
         <button
           type="button"
-          disabled={done}
-          onClick={() => (secretMode ? requestRecipe(recipe.id) : addToTodo(recipe.id))}
+          disabled={done || addToTodo.isPending || requestRecipe.isPending}
+          onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate(recipe.id))}
           className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode
             ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')
-            : (done ? '✓ リクエスト済み（日付未定）' : '＋ リクエストに追加')}
+            : (done ? '✓ リクエスト済み' : '＋ リクエストに追加')}
         </button>
       </div>
     </article>

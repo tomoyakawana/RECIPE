@@ -9,8 +9,10 @@ import { useToast } from './useToast';
  * as const：配列の中身を文字列ではなく、この値そのものの型にする（打ち間違いを防ぐ）
  */
 export const recipeKeys = {
-  all       : ['recipes'] as const,
-  cookedDates: (recipeId: string) => ['cookedDates', recipeId] as const,
+  all           : ['recipes'] as const,
+  // 全レシピの「作った日」をまとめて読み直すとき用（名札の先頭が一致するものが全部対象になる）
+  cookedDatesAll: ['cookedDates'] as const,
+  cookedDates   : (recipeId: string) => ['cookedDates', recipeId] as const,
 };
 
 /** 全レシピ（一覧・詳細で共有する） */

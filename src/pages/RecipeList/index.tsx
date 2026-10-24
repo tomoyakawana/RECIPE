@@ -3,8 +3,10 @@ import { Link } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
+import { useAuth } from '../../hooks/useAuth';
 import { useMockStore } from '../../hooks/useMockStore';
 import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
+import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd, todayYmd } from '../../utils/date';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
@@ -15,10 +17,15 @@ const QUICK = '⏱ 20分以内';
 const QUICK_MINUTES = 20;
 
 const RecipeListPage = () => {
-  // レシピは DB から。リクエスト（todo）とシークレットモードは、#6・#9 までモックのまま
   const { data: recipes = [], isPending, error, refetch } = useRecipes();
+  const { data: todo = [] } = useTodoItems();
   const toggleFavorite = useToggleFavorite();
-  const { todo, addToTodo, requestRecipe, secretMode } = useMockStore();
+  const addToTodo      = useAddTodo();
+  const requestRecipe  = useRequestRecipe();
+  // ログイン中の自分（「食べたい！」したのが自分かどうかを見る）
+  const myId = useAuth().session?.user.id;
+  // シークレットモードは #9 までモックのまま
+  const { secretMode } = useMockStore();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 
@@ -34,11 +41,11 @@ const RecipeListPage = () => {
     return r.title.includes(keyword) || r.tags.some(t => t.includes(keyword));
   });
 
-  // 「日付未定」でリクエストに入っているレシピの id（ボタンの表示切り替え用）
-  // 日付が決まっているものは別の日にもう一度入れられるので、未定のものだけ見る
-  const undatedRecipeIds = new Set(todo.filter(t => !t.plannedOn).map(t => t.recipeId));
+  // リクエストに入っているレシピの id（ボタンの表示切り替え用）
+  // 日付があってもなくても「済み」。「作った！」か ✕ で外れたら、また「＋ リクエスト」に戻る（#6 で変更）
+  const inTodoRecipeIds = new Set(todo.map(t => t.recipeId));
   // シークレットモードでは、自分が「食べたい！」したものだけを見る（奥さんの予定は見せない）
-  const requestedRecipeIds = new Set(todo.filter(t => t.requested).map(t => t.recipeId));
+  const requestedRecipeIds = new Set(todo.filter(t => t.requestedBy === myId).map(t => t.recipeId));
 
   return (
     <>
@@ -123,21 +130,23 @@ const RecipeListPage = () => {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => requestRecipe(r.id)}
-                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                    onClick={() => requestRecipe.mutate(r.id)}
+                    disabled={requestRecipe.isPending}
+                    className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                   >
                     🙋 食べたい！
                   </button>
                 )
-              ) : undatedRecipeIds.has(r.id) ? (
+              ) : inTodoRecipeIds.has(r.id) ? (
                 <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
                   ✓ リクエスト済み
                 </p>
               ) : (
                 <button
                   type="button"
-                  onClick={() => addToTodo(r.id)}
-                  className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand"
+                  onClick={() => addToTodo.mutate(r.id)}
+                  disabled={addToTodo.isPending}
+                  className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                 >
                   ＋ リクエスト
                 </button>
