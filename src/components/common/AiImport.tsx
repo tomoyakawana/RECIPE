@@ -4,23 +4,28 @@ import { parseRecipe, type ParseInput, type RecipeDraft } from '../../utils/pars
 
 type Props = {
   // 読み取りに成功したら、フォームに入れてもらう
-  onDraft: (draft: RecipeDraft) => void;
+  onDraft     : (draft: RecipeDraft) => void;
+  // 今あるタグ。AI に「なるべくこの中から選んで」と渡す
+  existingTags: string[];
 };
 
 /**
  * 「📷 写真から」「📋 テキストから」AI でレシピを取り込む部品
  * 結果はフォームに入れるだけで、保存はしない（人が確認してから保存する）
  */
-const AiImport = ({ onDraft }: Props) => {
+const AiImport = ({ onDraft, existingTags }: Props) => {
   const [mode,    setMode]    = useState<'none' | 'text'>('none');
   const [text,    setText]    = useState('');
-  const [loading, setLoading] = useState(false);
+  // 読み取り中かどうか。写真は時間がかかるので、待ち時間の目安を変える
+  const [loading, setLoading] = useState<false | 'text' | 'image'>(false);
+  // disabled などには true / false が必要なので、別に用意する
+  const busy = loading !== false;
   const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
 
   const run = async (input: ParseInput) => {
-    setLoading(true);
+    setLoading('text' in input ? 'text' : 'image');
     setMessage(null);
-    const result = await parseRecipe(input);
+    const result = await parseRecipe(input, existingTags);
     setLoading(false);
     if (result.error !== undefined) {
       setMessage({ type: 'error', text: result.error });
@@ -51,16 +56,16 @@ const AiImport = ({ onDraft }: Props) => {
       <div className="grid grid-cols-2 gap-2">
         <label
           className={`flex min-h-14 cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-brand/40 bg-white text-sm font-bold text-brand ${
-            loading ? 'pointer-events-none opacity-50' : ''
+            busy ? 'pointer-events-none opacity-50' : ''
           }`}
         >
           📷 写真から
-          <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={loading} />
+          <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={busy} />
         </label>
         <button
           type="button"
           onClick={() => setMode(m => (m === 'text' ? 'none' : 'text'))}
-          disabled={loading}
+          disabled={busy}
           className={`min-h-14 rounded-2xl border-2 border-dashed text-sm font-bold disabled:opacity-50 ${
             mode === 'text' ? 'border-brand bg-brand/10 text-brand' : 'border-brand/40 bg-white text-brand'
           }`}
@@ -83,7 +88,7 @@ const AiImport = ({ onDraft }: Props) => {
           <button
             type="button"
             onClick={() => run({ text })}
-            disabled={loading || !text.trim()}
+            disabled={busy || !text.trim()}
             className="mt-2 min-h-11 w-full rounded-full bg-brand text-sm font-bold text-white disabled:opacity-50"
           >
             AI で読み取る
@@ -94,7 +99,7 @@ const AiImport = ({ onDraft }: Props) => {
       {loading && (
         <p className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-3 text-sm text-stone-600 shadow-sm shadow-stone-900/5">
           <span className="inline-block size-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-          AI が読み取っています…（10秒ほどかかることがあります）
+          AI が読み取っています…（{loading === 'image' ? '30秒' : '10秒'}ほどかかることがあります）
         </p>
       )}
 
