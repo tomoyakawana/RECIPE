@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
 import { useMockStore } from '../../hooks/useMockStore';
+import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
 import { fmtYmd, todayYmd } from '../../utils/date';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
@@ -12,7 +15,10 @@ const QUICK = '⏱ 20分以内';
 const QUICK_MINUTES = 20;
 
 const RecipeListPage = () => {
-  const { recipes, todo, toggleFavorite, addToTodo, requestRecipe, secretMode } = useMockStore();
+  // レシピは DB から。リクエスト（todo）とシークレットモードは、#6・#9 までモックのまま
+  const { data: recipes = [], isPending, error, refetch } = useRecipes();
+  const toggleFavorite = useToggleFavorite();
+  const { todo, addToTodo, requestRecipe, secretMode } = useMockStore();
   const [keyword, setKeyword] = useState('');
   const [chip, setChip]       = useState(ALL);
 
@@ -80,7 +86,10 @@ const RecipeListPage = () => {
         ))}
       </div>
 
-      {filtered.length === 0 && <p className="py-10 text-center text-stone-500">該当するレシピがありません</p>}
+      {isPending && <Loading />}
+      {error && <LoadError error={error} onRetry={() => refetch()} />}
+
+      {!isPending && !error && filtered.length === 0 && <p className="py-10 text-center text-stone-500">該当するレシピがありません</p>}
 
       {/* 写真が主役のカード。iPhone は2列、PC は3列 */}
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
@@ -92,7 +101,7 @@ const RecipeListPage = () => {
               </Link>
               <button
                 type="button"
-                onClick={() => toggleFavorite(r.id)}
+                onClick={() => toggleFavorite.mutate({ recipeId: r.id, isFavorite: !r.isFavorite })}
                 aria-label="お気に入り"
                 className={`absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-white/80 text-lg backdrop-blur ${
                   r.isFavorite ? 'text-amber-400' : 'text-stone-300'
