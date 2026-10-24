@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addTodoItem, deleteTodoItem, fetchTodoItems, markCooked, requestRecipe, updatePlannedOn } from '../api/todo';
 import { dbErrorMessage } from '../utils/dbError';
+import { historyKeys } from './useHistory';
 import { recipeKeys } from './useRecipes';
 import { useToast } from './useToast';
 
@@ -48,18 +49,19 @@ export const useSetPlannedOn = () => {
   });
 };
 
-/** 「作った！」：リクエストから外れ、作った回数も変わるので、両方を読み直す */
+/** 「作った！」：リクエストから外れ、作った回数・作ったご飯も変わるので、まとめて読み直す */
 export const useMarkCooked = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
 
   return useMutation({
     mutationFn: markCooked,
-    // Promise.all：2つの読み直しを同時に始めて、両方終わるまで待つ
+    // Promise.all：読み直しを同時に始めて、全部終わるまで待つ
     onSuccess : () => Promise.all([
       queryClient.invalidateQueries({ queryKey: todoKeys.all }),
       // ['cookedDates'] で始まる名札を全部（どのレシピの分も）読み直す
       queryClient.invalidateQueries({ queryKey: recipeKeys.cookedDatesAll }),
+      queryClient.invalidateQueries({ queryKey: historyKeys.all }),
     ]),
     onError   : error => toast.error(dbErrorMessage(error)),
   });

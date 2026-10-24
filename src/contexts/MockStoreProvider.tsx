@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { MOCK_HISTORY } from '../mocks/history';
 import { MOCK_RECIPES } from '../mocks/recipes';
 import type { Recipe, RecipeInput } from '../types/recipe';
 import { MockStoreContext, type MockStore } from './mockStore';
@@ -15,7 +14,6 @@ const newId = (prefix: string) => `${prefix}-new-${++_nextId}`;
 export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
   // useState<Recipe[]> の <> は「この state に入るものの型」の指定
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
-  const [history] = useState(MOCK_HISTORY);   // 初期値から型が推論されるので、<> は省略できる
   const [secretMode, setSecretMode] = useState(false);
 
   const toggleFavorite = useCallback((recipeId: string) => {
@@ -39,11 +37,11 @@ export const MockStoreProvider = ({ children }: { children: ReactNode }) => {
 
   const value: MockStore = useMemo(
     () => ({
-      recipes, history, secretMode,
+      recipes, secretMode,
       toggleFavorite, addRecipe, updateRecipe, setRecipeNote, setSecretMode,
     }),
     [
-      recipes, history, secretMode,
+      recipes, secretMode,
       toggleFavorite, addRecipe, updateRecipe, setRecipeNote, setSecretMode,
     ],
   );

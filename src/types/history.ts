@@ -8,8 +8,15 @@ export type HistoryEntry = {
   id      : string;
   // どのレシピを作ったか（Recipe の id を指す。DB でいう外部キー）
   recipeId: string;
-  // 作った日（'2026-10-17' のような YYYY-MM-DD 形式の文字列）
+  // 作った日（'2026-10-16' のような YYYY-MM-DD 形式の文字列）
   cookedOn: string;
   // `?` 付きは「無くてもよい」項目。中身は string か undefined のどちらか
   memo?   : string;
+  // 作ったレシピの名前とタグ（履歴と一緒に読む。レシピが論理削除されていても名前は出せる）
+  recipe  : {
+    title  : string;
+    tags   : string[];
+    // 論理削除されたレシピなら true（詳細画面には飛べない）
+    deleted: boolean;
+  };
 };

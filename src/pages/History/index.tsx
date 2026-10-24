@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
-import { useMockStore } from '../../hooks/useMockStore';
+import LoadError from '../../components/common/LoadError';
+import Loading from '../../components/common/Loading';
+import { useHistory } from '../../hooks/useHistory';
 import type { HistoryEntry } from '../../types/history';
 import { fmtYmd } from '../../utils/date';
 
@@ -11,15 +13,15 @@ const toMonthLabel = (ymd: string) => {
 };
 
 const HistoryPage = () => {
-  const { history, recipes } = useMockStore();
+  const { data: history, isPending, error, refetch } = useHistory();
 
-  // 新しい順に並べる（YYYY-MM-DD 形式なので文字列のまま比較できる）
-  const entries = [...history].sort((a, b) => b.cookedOn.localeCompare(a.cookedOn));
+  if (isPending) return <Loading />;
+  if (error) return <LoadError error={error} onRetry={() => refetch()} />;
 
-  // 月ごとにまとめる。Map は追加した順番を保つので、新しい月から並ぶ
+  // 月ごとにまとめる（DB から新しい順で届く）。Map は追加した順番を保つので、新しい月から並ぶ
   // Map<string, HistoryEntry[]> は「キーが文字列、値が履歴の配列」の対応表
   const byMonth = new Map<string, HistoryEntry[]>();
-  for (const e of entries) {
+  for (const e of history) {
     const key = toMonthLabel(e.cookedOn);
     byMonth.set(key, [...(byMonth.get(key) ?? []), e]);
   }
@@ -27,7 +29,9 @@ const HistoryPage = () => {
   return (
     <>
       <h1 className="text-3xl font-extrabold tracking-tight">作ったご飯</h1>
-      <p className="mt-1 mb-5 text-sm text-stone-500">これまでに {history.length} 回作りました</p>
+      <p className="mt-1 mb-5 text-sm text-stone-500">
+        {history.length > 0 ? `これまでに ${history.length} 回作りました` : 'リクエストの「作った！」で、ここに記録されます'}
+      </p>
 
       {[...byMonth].map(([month, items]) => (
         <section key={month} className="mb-6">
@@ -36,22 +40,28 @@ const HistoryPage = () => {
           </h2>
           <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
             {items.map(entry => {
-              const recipe = recipes.find(r => r.id === entry.recipeId);
+              const { recipe } = entry;
+              // カードの中身（削除されたレシピは詳細画面がないので、リンクにしない）
+              const body = (
+                <>
+                  <ImagePlaceholder tags={recipe.tags} className="size-16 shrink-0 rounded-xl" emojiSize="text-3xl" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-brand">{fmtYmd(entry.cookedOn)}</p>
+                    <p className="truncate font-bold">
+                      {recipe.title}
+                      {recipe.deleted && <span className="ml-1 text-xs font-normal text-stone-400">（削除済み）</span>}
+                    </p>
+                    {/* memo は無いこともある（undefined）ので、ある時だけ表示 */}
+                    {entry.memo && <p className="truncate text-sm text-stone-500">💬 {entry.memo}</p>}
+                  </div>
+                </>
+              );
+              const cardClass = 'flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm shadow-stone-900/5';
               return (
                 <li key={entry.id}>
-                  <Link
-                    to={`/recipes/${entry.recipeId}`}
-                    className="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm shadow-stone-900/5"
-                  >
-                    <ImagePlaceholder tags={recipe?.tags} className="size-16 shrink-0 rounded-xl" emojiSize="text-3xl" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-brand">{fmtYmd(entry.cookedOn)}</p>
-                      {/* `?.` は recipe が undefined のときにエラーにせず undefined を返す書き方 */}
-                      <p className="truncate font-bold">{recipe?.title ?? '（削除されたレシピ）'}</p>
-                      {/* memo は無いこともある（undefined）ので、ある時だけ表示 */}
-                      {entry.memo && <p className="truncate text-sm text-stone-500">💬 {entry.memo}</p>}
-                    </div>
-                  </Link>
+                  {recipe.deleted
+                    ? <div className={cardClass}>{body}</div>
+                    : <Link to={`/recipes/${entry.recipeId}`} className={cardClass}>{body}</Link>}
                 </li>
               );
             })}

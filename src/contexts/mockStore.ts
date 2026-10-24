@@ -1,5 +1,4 @@
 import { createContext } from 'react';
-import type { HistoryEntry } from '../types/history';
 import type { Recipe, RecipeInput } from '../types/recipe';
 
 /**
@@ -10,7 +9,6 @@ import type { Recipe, RecipeInput } from '../types/recipe';
  */
 export type MockStore = {
   recipes : Recipe[];
-  history : HistoryEntry[];
   // シークレットモード（オンのとき「リクエスト」を表示しない。予定を見ないためのモード）
   // ※ 本来はユーザーごとの設定として DB に保存する。モックの間はメモリ上だけ（リロードでオフに戻る）
   secretMode: boolean;
