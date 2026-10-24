@@ -20,6 +20,8 @@ export const dbErrorMessage = (error: unknown): string => {
   switch (code) {
     // 一意制約（同じ日に同じ料理、など）
     case '23505': return 'すでに入っています';
+    // check 制約（料理名が長すぎる、調理時間が0以下、など）
+    case '23514': return '入力内容を確認してください';
     // 外部キー（履歴があるレシピを消そうとした、など）
     case '23503': return 'ほかのデータから使われているため、変更できません';
     // 権限がない（RLS・GRANT）。ログインが切れたときもここに来る

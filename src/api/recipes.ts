@@ -1,5 +1,6 @@
 import type { QueryData } from '@supabase/supabase-js';
-import type { Recipe } from '../types/recipe';
+import type { Database } from '../types/database';
+import type { Recipe, RecipeInput } from '../types/recipe';
 import { supabase } from '../utils/supabaseClient';
 
 /**
@@ -55,6 +56,48 @@ const toRecipe = (row: RecipeRow): Recipe => ({
   sourceUrl  : row.source_url ?? undefined,
   note       : row.note ?? undefined,
 });
+
+/**
+ * save_recipe の引数（自動生成の型を、null も渡せる形に直したもの）
+ *
+ * 型の生成では「関数の引数が null を受け付けるか」が分からないので、生成された型はすべて null 不可になっている。
+ * 実際の関数は null を受け付ける（新規の id、空欄の調理時間など）ので、ここで正しい形を書く。
+ * database.ts は生成し直すと上書きされるので、手で直さない
+ */
+type SaveRecipeArgs = {
+  p_recipe_id   : string | null;
+  p_title       : string;
+  p_cook_minutes: number | null;
+  p_servings    : number | null;
+  p_tags        : string[];
+  p_source_url  : string | null;
+  p_ingredients : { name: string; amount: string }[];
+  p_steps       : string[];
+};
+
+/**
+ * レシピを保存する（recipeId が null なら追加、あれば編集）。保存したレシピの id を返す
+ * DB 関数 save_recipe が、本体・材料・手順の3テーブルを1トランザクションで書く（途中で失敗したら全部取り消し）
+ */
+export const saveRecipe = async (recipeId: string | null, input: RecipeInput): Promise<string> => {
+  const args: SaveRecipeArgs = {
+    p_recipe_id   : recipeId,
+    p_title       : input.title,
+    p_cook_minutes: input.cookMinutes ?? null,
+    p_servings    : input.servings ?? null,
+    p_tags        : input.tags,
+    p_source_url  : input.sourceUrl ?? null,
+    p_ingredients : input.ingredients,
+    p_steps       : input.steps,
+  };
+  // 生成された型（null 不可）に合わせるため、ここで1回だけ型を当てはめる
+  const { data, error } = await supabase.rpc(
+    'save_recipe',
+    args as unknown as Database['public']['Functions']['save_recipe']['Args'],
+  );
+  if (error) throw error;
+  return data;
+};
 
 /** お気に入りの ON/OFF（夫婦共通） */
 export const updateFavorite = async (recipeId: string, isFavorite: boolean): Promise<void> => {

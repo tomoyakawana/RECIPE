@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchCookedDates, fetchRecipes, updateFavorite, updateNote } from '../api/recipes';
-import type { Recipe } from '../types/recipe';
+import { fetchCookedDates, fetchRecipes, saveRecipe, updateFavorite, updateNote } from '../api/recipes';
+import type { Recipe, RecipeInput } from '../types/recipe';
 import { dbErrorMessage } from '../utils/dbError';
 import { useToast } from './useToast';
 
@@ -67,6 +67,23 @@ export const useToggleFavorite = () => {
 
     // 成功・失敗どちらでも、最後に DB の内容で読み直して揃える
     onSettled: () => queryClient.invalidateQueries({ queryKey: recipeKeys.all }),
+  });
+};
+
+/**
+ * レシピの追加・編集の保存
+ * 保存のあと一覧を読み直し、それが終わってから mutateAsync が返る
+ * （待たずに詳細画面へ移ると、追加したばかりのレシピがまだなく「見つかりません」が一瞬出るため）
+ */
+export const useSaveRecipe = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: ({ recipeId, input }: { recipeId: string | null; input: RecipeInput }) => saveRecipe(recipeId, input),
+    // Promise を返すと、それが終わるまで「保存中」が続く
+    onSuccess : () => queryClient.invalidateQueries({ queryKey: recipeKeys.all }),
+    onError   : error => toast.error(dbErrorMessage(error)),
   });
 };
 
