@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router';
+import AddPlanSheet from '../../components/common/AddPlanSheet';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
@@ -99,6 +100,7 @@ const TodoPage = () => {
   const toast        = useToast();
   const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [notice, setNotice]     = useState('');
 
   // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
@@ -187,6 +189,14 @@ const TodoPage = () => {
       <div className="md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:items-start md:gap-6">
         <div className="mb-5 md:sticky md:top-4 md:mb-0">
           <MonthCalendar today={today} marks={marks} selected={selected} onSelect={handleSelect} />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="mt-3 min-h-11 w-full rounded-full bg-brand/10 px-4 text-sm font-bold text-brand"
+          >
+            ＋ 予定を入れる
+          </button>
+          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} />}
         </div>
 
         <div>
