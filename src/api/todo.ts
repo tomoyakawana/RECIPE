@@ -21,9 +21,9 @@ export const fetchTodoItems = async (): Promise<TodoItem[]> => {
   }));
 };
 
-/** 日付未定で追加する（日付未定の同じ料理がすでにあれば、DB の一意制約で 23505 になる） */
-export const addTodoItem = async (recipeId: string): Promise<void> => {
-  const { error } = await supabase.from('todo_items').insert({ recipe_id: recipeId });
+/** 予定日を指定して追加する（同じ日（日付未定どうしも含む）に同じ料理があれば 23505） */
+export const addTodoItem = async (recipeId: string, plannedOn: string | undefined): Promise<void> => {
+  const { error } = await supabase.from('todo_items').insert({ recipe_id: recipeId, planned_on: plannedOn ?? null });
   if (error) throw error;
 };
 

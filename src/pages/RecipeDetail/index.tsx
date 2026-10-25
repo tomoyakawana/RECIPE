@@ -212,7 +212,7 @@ const RecipeDetailPage = () => {
         <button
           type="button"
           disabled={done || addToTodo.isPending || requestRecipe.isPending}
-          onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate(recipe.id))}
+          onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate({ recipeId: recipe.id, plannedOn: undefined }))}
           className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode

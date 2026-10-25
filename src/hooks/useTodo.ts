@@ -27,8 +27,10 @@ const useTodoMutation = <Vars,>(mutationFn: (vars: Vars) => Promise<void>) => {
   });
 };
 
-/** 「＋ リクエスト」：日付未定で追加 */
-export const useAddTodo = () => useTodoMutation(addTodoItem);
+/** リクエストに追加（plannedOn を省くと日付未定） */
+export const useAddTodo = () => useTodoMutation(
+  ({ recipeId, plannedOn }: { recipeId: string; plannedOn: string | undefined }) => addTodoItem(recipeId, plannedOn)
+);
 
 /** 「🙋 食べたい！」 */
 export const useRequestRecipe = () => useTodoMutation(requestRecipe);
