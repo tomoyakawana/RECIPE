@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Edge Function をローカルで動かすときの秘密の値（GEMINI_API_KEY など）
+supabase/functions/.env
