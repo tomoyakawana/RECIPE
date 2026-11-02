@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { todayYmd } from '../../utils/date';
 import type { TodoItem } from '../../types/todo';
 import type { Recipe } from '../../types/recipe';
+import { useSetPlannedOn } from '../../hooks/useTodo';
   
 type Props = {
   // ✕ を押したとき（シートを閉じる関数を、呼ぶ側から受け取る）
@@ -15,6 +16,13 @@ type Props = {
 /** 予定を入れるシート（日付を選んで、リクエストやレシピから、その日の予定を入れる） */
 const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const [date, setDate] = useState(initialDate);
+  const setPlannedOn = useSetPlannedOn();
+
+  const handlePick = (todoId: string) => {
+    setPlannedOn.mutate({ todoId, plannedOn: date }, {
+          onSuccess: () => onClose(),
+        });
+  };
 
   return (
     <div className="fixed inset-0 z-40 bg-black/40">
@@ -46,7 +54,11 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
         </div>
         <ul>
         {requests.map(({ item, recipe }) => (
-          <li key={item.id}>{recipe.title}</li>
+          <li key={item.id}>
+          <button type="button" onClick={() => handlePick(item.id)}>
+            {recipe.title}
+          </button>
+          </li>
         ))}
         </ul>
       </div>
