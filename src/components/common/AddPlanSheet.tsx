@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { todayYmd } from '../../utils/date';
+import { fmtYmd, todayYmd } from '../../utils/date';
 import type { TodoItem } from '../../types/todo';
 import type { Recipe } from '../../types/recipe';
 import { useSetPlannedOn } from '../../hooks/useTodo';
+import { useToast } from '../../hooks/useToast';
+import { dbErrorMessage } from '../../utils/dbError';
   
 type Props = {
   // ✕ を押したとき（シートを閉じる関数を、呼ぶ側から受け取る）
@@ -17,10 +19,15 @@ type Props = {
 const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const [date, setDate] = useState(initialDate);
   const setPlannedOn = useSetPlannedOn();
+  const toast = useToast();
 
-  const handlePick = (todoId: string) => {
+  const handlePick = (todoId: string , title: string) => {
     setPlannedOn.mutate({ todoId, plannedOn: date }, {
-          onSuccess: () => onClose(),
+        onSuccess: () => { toast.success(`${fmtYmd(date)} に ${title} を入れました`) ; onClose()},
+        onError: error => {
+            if ((error as { code?: string }).code === '23505') toast.error(`その日にはすでに同じレシピが入っています`);
+            else toast.error(dbErrorMessage(error));
+          },
         });
   };
 
@@ -55,7 +62,7 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
         <ul>
         {requests.map(({ item, recipe }) => (
           <li key={item.id}>
-          <button type="button" onClick={() => handlePick(item.id)}>
+          <button type="button" onClick={() => handlePick(item.id, recipe.title)}>
             {recipe.title}
           </button>
           </li>
