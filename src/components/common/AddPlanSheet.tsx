@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { todayYmd } from '../../utils/date';
+import type { TodoItem } from '../../types/todo';
+import type { Recipe } from '../../types/recipe';
   
 type Props = {
   // ✕ を押したとき（シートを閉じる関数を、呼ぶ側から受け取る）
   onClose: () => void;
   // 初期表示する日付（YYYY-MM-DD）を渡す。選んだ日付があればそれを、なければ今日の日付を渡す
   initialDate: string;
+  // 予定を入れる候補のリスト（リクエストとレシピの組み合わせ）
+  requests: { item: TodoItem; recipe: Recipe }[];
 };
 
 /** 予定を入れるシート（日付を選んで、リクエストやレシピから、その日の予定を入れる） */
-const AddPlanSheet = ({ onClose, initialDate }: Props) => {
+const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const [date, setDate] = useState(initialDate);
 
   return (
@@ -40,6 +44,11 @@ const AddPlanSheet = ({ onClose, initialDate }: Props) => {
           ✕
           </button>
         </div>
+        <ul>
+        {requests.map(({ item, recipe }) => (
+          <li key={item.id}>{recipe.title}</li>
+        ))}
+        </ul>
       </div>
      </div>
   );

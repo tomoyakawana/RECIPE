@@ -196,7 +196,7 @@ const TodoPage = () => {
           >
             ＋ 予定を入れる
           </button>
-          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} />}
+          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={undated} />}
         </div>
 
         <div>
