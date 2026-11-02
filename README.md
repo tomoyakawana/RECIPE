@@ -52,6 +52,22 @@ npx supabase stop && npx supabase start -x logflare,vector
 
 `supabase/functions/.env` は Git に入れない（`.gitignore` 済み）。
 
+## ローカルの画面が表示されないとき
+
+開発サーバーとローカルの Supabase は、Mac を再起動したりターミナルを閉じたりすると止まる。上から順に確かめる。
+
+```bash
+# 1. 開発サーバー（5173 番）が動いているか。node の行が出れば動いている。何も出なければ止まっている
+lsof -nP -iTCP:5173 -sTCP:LISTEN
+npm run dev -- --host                  # 止まっていたら起動（iPhone からも見られる形）
+
+# 2. ローカルの Supabase が動いているか。URL の一覧が出れば動いている。エラーなら止まっている
+npx supabase status
+npx supabase start -x logflare,vector  # 止まっていたら起動（Docker Desktop を先に起動しておく）
+```
+
+画面は出るのにデータが出ない・ログインできないときは、2（Supabase）の方を疑う。
+
 ## 環境
 
 | 環境 | URL | 使いどころ |
