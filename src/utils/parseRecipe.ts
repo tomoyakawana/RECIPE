@@ -12,8 +12,8 @@ export type RecipeDraft = {
   steps      : string[];
 };
 
-// 文章か画像のどちらかを送る
-export type ParseInput = { text: string } | { imageBase64: string; mimeType: 'image/jpeg' };
+// 文章・画像・URL のどれかを送る（URL は Edge Function がページを取りに行く）
+export type ParseInput = { text: string } | { imageBase64: string; mimeType: 'image/jpeg' } | { url: string };
 
 // 成功なら draft、失敗なら画面に出すメッセージ（どちらか一方だけが入る）
 type ParseResult = { draft: RecipeDraft; error?: undefined } | { draft?: undefined; error: string };
