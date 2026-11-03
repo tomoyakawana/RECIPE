@@ -47,8 +47,8 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const [steps,       setSteps]       = useState<string[]>(recipe && recipe.steps.length > 0 ? recipe.steps : ['']);
   const [sourceUrl,   setSourceUrl]   = useState(recipe?.sourceUrl ?? '');
 
-  // AI が読み取った下書きをフォームに入れる（参考URL は AI からは来ないのでそのまま）
-  const applyDraft = (draft: RecipeDraft) => {
+  // AI が読み取った下書きをフォームに入れる（URL から取り込んだときは、その URL を参考URL に入れる）
+  const applyDraft = (draft: RecipeDraft, url?: string) => {
     // すでに何か入力していたら、上書きしてよいか確認する
     const hasInput = title.trim() || steps.some(st => st.trim()) || ingredients.some(ing => ing.name.trim());
     if (hasInput && !window.confirm('入力中の内容を、読み取った内容で置き換えますか？')) return;
@@ -59,6 +59,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     setTags(draft.tags);
     setIngredients(draft.ingredients.length > 0 ? draft.ingredients : [EMPTY_INGREDIENT]);
     setSteps(draft.steps.length > 0 ? draft.steps : ['']);
+    if (url) setSourceUrl(url);
   };
 
   // 材料の i 行目の name か amount を書き換える

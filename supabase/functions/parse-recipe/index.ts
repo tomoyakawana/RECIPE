@@ -1,11 +1,11 @@
 /**
- * parse-recipe：文章や写真から、レシピの下書き（料理名・材料・手順など）を作る
+ * parse-recipe：文章や写真、レシピサイトの URL から、レシピの下書き（料理名・材料・手順など）を作る
  *
  * Gemini を呼ぶのはこの関数の1か所だけ（SSAM の ai_service.py と同じ考え方）。
  * API キーは Supabase の Secrets（GEMINI_API_KEY）にだけ置き、フロントには渡さない。
  * 結果は「下書き」として返すだけで、DB には保存しない（人が確認してから保存する）。
  *
- * 呼び出し：supabase.functions.invoke('parse-recipe', { body: { text } または { imageBase64, mimeType } })
+ * 呼び出し：supabase.functions.invoke('parse-recipe', { body: { text } / { imageBase64, mimeType } / { url } })
  * 返り値  ：成功 { draft: RecipeDraft } ／ 失敗 { error: '日本語のメッセージ' }
  */
 import '@supabase/functions-js/edge-runtime.d.ts';
@@ -23,6 +23,17 @@ const MAX_TEXT_CHARS  = 8_000;                     // 長すぎる文章は受�
 const MAX_IMAGE_CHARS = 4_000_000;                 // base64 で約 3MB まで（アプリ側で縮小してから送る前提）
 const IMAGE_TYPES     = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
+// URL から取り込むときに、取りに行ってよいサイト（ここにないサイトには行かない。SSRF 対策）
+// 増やすときは、そのサイトのページに JSON-LD の Recipe があるかを確かめてから1行足す（HANDOFF 18 章）
+const ALLOWED_HOSTS = [
+  'delishkitchen.tv', 'www.delishkitchen.tv',   // DELISH KITCHEN
+  'cookpad.com', 'www.cookpad.com',             // クックパッド
+  'www.kurashiru.com', 'kurashiru.com',         // クラシル
+];
+const FETCH_TIMEOUT_MS = 15_000;                 // ページを待つ時間
+const MAX_PAGE_BYTES   = 3_000_000;              // ページの大きさの上限（今の3サイトは 150〜340KB）
+const MAX_REDIRECTS    = 3;                      // 転送（www の付け外しなど）を追う回数
+
 // ────────────────────────────────────────────────
 // 入力の検証：文章か画像のどちらか
 // ────────────────────────────────────────────────
@@ -32,7 +43,11 @@ const ExistingTagsSchema = z.array(z.string().trim().min(1).max(20)).max(100).op
 const InputSchema = z.union([
   z.object({ text: z.string().trim().min(1).max(MAX_TEXT_CHARS), existingTags: ExistingTagsSchema }),
   z.object({ imageBase64: z.string().min(1).max(MAX_IMAGE_CHARS), mimeType: z.enum(IMAGE_TYPES), existingTags: ExistingTagsSchema }),
+  z.object({ url: z.string().trim().min(1).max(2_000), existingTags: ExistingTagsSchema }),
 ]);
+
+// Gemini に渡すのは文章か画像（URL は先にページを取りに行き、文章にしてから渡す）
+type GeminiInput = Exclude<z.infer<typeof InputSchema>, { url: string }>;
 
 // ────────────────────────────────────────────────
 // 出力の検証：Gemini の答えを、そのまま信用しない
@@ -63,7 +78,10 @@ const GEMINI_RESPONSE_SCHEMA = {
       type : 'ARRAY',
       items: {
         type      : 'OBJECT',
-        properties: { name: { type: 'STRING' }, amount: { type: 'STRING' } },
+        properties: {
+          name  : { type: 'STRING', description: '材料名。★・☆・◎・(A)・(B) などの印が付いていれば、印も含めてそのまま書く' },
+          amount: { type: 'STRING' },
+        },
         required  : ['name', 'amount'],
       },
     },
@@ -76,6 +94,7 @@ const PROMPT = `あなたは料理レシピの整理係です。与えられた�
 ルール：
 - 書かれていないことを推測で足さない（分量が書かれていなければ amount は空文字、時間や人数がなければ null）
 - 材料は「名前」と「分量」に分ける（例：「豚ロース 300g」→ name: 豚ロース, amount: 300g）
+- 材料名に付いた ★・☆・◎・(A) などの印は、作り方の中で「★を加える」のように使われるので、消さずに名前に残す（例：「★ごま油 大さじ1」→ name: ★ごま油, amount: 大さじ1／「(A)しょうゆ 大さじ2」→ name: (A)しょうゆ, amount: 大さじ2）
 - 写真の文字認識などで、材料名だけが続いた後に分量だけが続いている場合は、上から順番に対応づける（1番目の材料名と1番目の分量、2番目と2番目…）
 - 作り方は1ステップずつに分け、先頭の番号（1. や ①）は外す。1つのステップの中では改行しない
 - 広告・アプリの宣伝・関連レシピ・コメント・栄養成分・シェアボタンなど、レシピ本体以外は無視する
@@ -90,7 +109,146 @@ class UserFacingError extends Error {
   }
 }
 
-const callGemini = async (input: z.infer<typeof InputSchema>): Promise<RecipeDraft> => {
+// ────────────────────────────────────────────────
+// URL から取り込む：ページの中の JSON-LD（schema.org の Recipe）だけを取り出して、文章にする
+// ────────────────────────────────────────────────
+const NOT_SUPPORTED_MESSAGE =
+  'このサイトはまだ URL での取り込みに対応していません。レシピの文章をコピーして「📋 テキスト」に貼ってください';
+
+// URL を確かめる：https で、許可したサイトだけ
+const checkUrl = (raw: string): URL => {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new UserFacingError('URL の形が正しくありません。https:// から始まる URL を貼ってください', 400);
+  }
+  const host = url.hostname.toLowerCase();
+  // Instagram はログインしないと中身が見られないので、別の取り込み方を案内する
+  if (host === 'instagram.com' || host.endsWith('.instagram.com')) {
+    throw new UserFacingError(
+      'Instagram は URL から読み取れません。投稿の文章をコピーして「📋 テキスト」に貼るか、文章の部分のスクショを「📷 写真」で取り込んでください',
+      422,
+    );
+  }
+  if (url.protocol !== 'https:' || !ALLOWED_HOSTS.includes(host)) throw new UserFacingError(NOT_SUPPORTED_MESSAGE, 422);
+  return url;
+};
+
+// ページを取りに行く。転送は自動で追わず、転送先も許可したサイトかを毎回確かめる
+const fetchPage = async (first: URL): Promise<string> => {
+  let url = first;
+  for (let i = 0; i <= MAX_REDIRECTS; i++) {
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        redirect: 'manual',
+        headers : { 'User-Agent': 'Mozilla/5.0 (compatible; recipe-app/1.0)', Accept: 'text/html' },
+        signal  : AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+    } catch (e) {
+      console.error(`[parse-recipe] fetch failed host=${url.hostname}`, e);
+      throw new UserFacingError('ページを開けませんでした。URL が正しいか確認して、もう一度お試しください', 502);
+    }
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      await res.body?.cancel();
+      if (!location) break;
+      url = checkUrl(new URL(location, url).toString());
+      continue;
+    }
+    if (!res.ok) {
+      console.error(`[parse-recipe] page status=${res.status} host=${url.hostname}`);
+      throw new UserFacingError('ページを開けませんでした。URL が正しいか確認して、もう一度お試しください', 502);
+    }
+
+    // 大きすぎるページは途中で読むのをやめる
+    const reader = res.body?.getReader();
+    if (!reader) break;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > MAX_PAGE_BYTES) {
+        await reader.cancel();
+        throw new UserFacingError('ページが大きすぎて読み取れませんでした', 422);
+      }
+      chunks.push(value);
+    }
+    return new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
+  }
+  throw new UserFacingError('ページを開けませんでした。URL が正しいか確認して、もう一度お試しください', 502);
+};
+
+// JSON-LD の中から Recipe を探す（配列や @graph の中に入っていることもある）
+const findRecipe = (node: unknown): Record<string, unknown> | null => {
+  if (Array.isArray(node)) {
+    for (const n of node) {
+      const found = findRecipe(n);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (node && typeof node === 'object') {
+    const obj  = node as Record<string, unknown>;
+    const type = obj['@type'];
+    if (type === 'Recipe' || (Array.isArray(type) && type.includes('Recipe'))) return obj;
+    if (obj['@graph']) return findRecipe(obj['@graph']);
+  }
+  return null;
+};
+
+// 作り方は「文字だけ」「HowToStep（text）」「HowToSection（中に手順の配列）」のどれかで書かれている
+const stepTexts = (node: unknown): string[] => {
+  if (typeof node === 'string') return [node];
+  if (Array.isArray(node)) return node.flatMap(stepTexts);
+  if (node && typeof node === 'object') {
+    const obj = node as Record<string, unknown>;
+    if (obj.itemListElement) return stepTexts(obj.itemListElement);
+    if (typeof obj.text === 'string') return [obj.text];
+  }
+  return [];
+};
+
+// 1つの値を文字にする（配列はつなげる。オブジェクトなど想定外の形は使わない）
+const toText = (v: unknown): string =>
+  typeof v === 'string' || typeof v === 'number' ? String(v)
+  : Array.isArray(v) ? v.map(toText).filter(Boolean).join('、')
+  : '';
+
+// ページから、AI に渡す文章を作る。使う項目だけに絞る（画像・作者・コメントなどは渡さない）
+const recipeTextFromPage = (html: string): string => {
+  const blocks = html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  let recipe: Record<string, unknown> | null = null;
+  for (const [, json] of blocks) {
+    try {
+      recipe = findRecipe(JSON.parse(json));
+    } catch {
+      continue;   // 壊れた JSON-LD は飛ばす
+    }
+    if (recipe) break;
+  }
+  if (!recipe) throw new UserFacingError('このページからレシピを見つけられませんでした。レシピの文章をコピーして「📋 テキスト」に貼ってください', 422);
+
+  const ingredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient.map(toText).filter(Boolean) : [];
+  const steps       = stepTexts(recipe.recipeInstructions).map(s => s.trim()).filter(Boolean);
+  const lines = [
+    `料理名：${toText(recipe.name)}`,
+    `何人分：${toText(recipe.recipeYield)}`,
+    `調理時間：${toText(recipe.totalTime ?? recipe.cookTime)}（ISO 8601 の形。PT30M＝30分、PT1800S＝30分）`,
+    `ジャンル・キーワード：${[toText(recipe.recipeCuisine), toText(recipe.recipeCategory), toText(recipe.keywords)].filter(Boolean).join('、')}`,
+    '材料：',
+    ...ingredients.map(ing => `- ${ing}`),
+    '作り方：',
+    ...steps.map((st, i) => `${i + 1}. ${st}`),
+  ];
+  return lines.join('\n').slice(0, MAX_TEXT_CHARS);
+};
+
+const callGemini = async (input: GeminiInput): Promise<RecipeDraft> => {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY が設定されていません');
 
@@ -180,11 +338,15 @@ export default {
 
     const input = InputSchema.safeParse(body);
     if (!input.success) {
-      return Response.json({ error: `文章は${MAX_TEXT_CHARS}文字まで、画像は JPEG / PNG / WebP で約3MBまでです` }, { status: 400 });
+      return Response.json({ error: `文章は${MAX_TEXT_CHARS}文字まで、画像は JPEG / PNG / WebP で約3MBまで、URL は2,000文字までです` }, { status: 400 });
     }
 
     try {
-      const draft = await callGemini(input.data);
+      // URL のときは、先にページを取りに行って文章にしてから AI に渡す
+      const data  = input.data;
+      const draft = 'url' in data
+        ? await callGemini({ text: recipeTextFromPage(await fetchPage(checkUrl(data.url))), existingTags: data.existingTags })
+        : await callGemini(data);
       return Response.json({ draft });
     } catch (e) {
       if (e instanceof UserFacingError) return Response.json({ error: e.message }, { status: e.status });
