@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router';
 import { useSecretModeQuery } from '../../../hooks/useSettings';
 import LoadError from '../../common/LoadError';
 import Loading from '../../common/Loading';
@@ -20,7 +21,14 @@ const NAV_ITEMS = [
  */
 const MainLayout = () => {
   const { pathname } = useLocation();
+  const navigationType = useNavigationType();
   const { data: secretMode, isPending, error, refetch } = useSecretModeQuery();
+
+  // 画面を移ったら一番上から見せる（一覧の途中でレシピを押しても、詳細が途中の高さから始まらないように）
+  // 「戻る」（POP。iPhone の左端からのスワイプも）のときは何もしない。一覧の見ていた位置はブラウザに任せる
+  useEffect(() => {
+    if (navigationType !== 'POP') window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname, navigationType]);
 
   // シークレットモードの設定を読み終わるまでは、タブも画面も出さない
   // （読み込み中をオフとして扱うと、開いた一瞬だけ「リクエスト」タブや相手の予定が見えてしまうため）
