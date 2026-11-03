@@ -166,7 +166,9 @@ const fetchPage = async (first: URL): Promise<string> => {
     // 大きすぎるページは途中で読むのをやめる
     const reader = res.body?.getReader();
     if (!reader) break;
-    const chunks: Uint8Array[] = [];
+    // 読んだ分ずつ文字に直す（stream: true で、かけらの境目で文字が割れても次のかけらとつなげてくれる）
+    const decoder = new TextDecoder();
+    let html = '';
     let size = 0;
     while (true) {
       const { done, value } = await reader.read();
@@ -176,9 +178,9 @@ const fetchPage = async (first: URL): Promise<string> => {
         await reader.cancel();
         throw new UserFacingError('ページが大きすぎて読み取れませんでした', 422);
       }
-      chunks.push(value);
+      html += decoder.decode(value, { stream: true });
     }
-    return new TextDecoder().decode(await new Blob(chunks).arrayBuffer());
+    return html + decoder.decode();
   }
   throw new UserFacingError('ページを開けませんでした。URL が正しいか確認して、もう一度お試しください', 502);
 };
