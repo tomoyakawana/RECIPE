@@ -638,7 +638,10 @@ npx supabase secrets list                              # 名前だけ確認（�
 npx supabase functions deploy parse-recipe --use-api
 npx supabase functions list                            # 版と verify_jwt を確認
 ```
-- 手元に Deno がないので、関数の型チェックはデプロイ時に Supabase 側で行われる
+- 手元に Deno は入れていないが、**npm 経由で型チェックできる**（2026-11-03 確認。CI と同じ Deno 2）。Edge Function を変えたら、push の前に流す。ローカルの Supabase で動いても、型チェックが通るとは限らない（#42 で、動いたのに CI の `deno check` で落ちた）
+  ```bash
+  cd supabase/functions/parse-recipe && npx -y deno@2 check index.ts   # できた deno.lock は Git に入れない（消す）
+  ```
 - VS Code で `parse-recipe/index.ts` に赤線（`zod` や `Deno` が見つからない）が出るのは、Node.js 用の設定で読んでいるため。デプロイには影響しない
 
 ### 時間切れの対応（2026-10-22）
