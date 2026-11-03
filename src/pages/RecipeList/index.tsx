@@ -117,10 +117,10 @@ const RecipeListPage = () => {
               </button>
             </div>
             <div className="p-3">
-              <Link to={`/recipes/${r.id}`} className="line-clamp-2 leading-snug font-bold">
+              <Link to={`/recipes/${r.id}`} className="line-clamp-1 min-h-[1lh] leading-snug font-bold">
                 {r.title}
               </Link>
-              <p className="mt-1 text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
+              <p className="mt-1 min-h-[1lh] text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
               {secretMode ? (
                 requestedRecipeIds.has(r.id) ? (
                   <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">

@@ -47,8 +47,8 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const [steps,       setSteps]       = useState<string[]>(recipe && recipe.steps.length > 0 ? recipe.steps : ['']);
   const [sourceUrl,   setSourceUrl]   = useState(recipe?.sourceUrl ?? '');
 
-  // AI が読み取った下書きをフォームに入れる（参考URL は AI からは来ないのでそのまま）
-  const applyDraft = (draft: RecipeDraft) => {
+  // AI が読み取った下書きをフォームに入れる（URL から取り込んだときは、その URL を参考URL に入れる）
+  const applyDraft = (draft: RecipeDraft, url?: string) => {
     // すでに何か入力していたら、上書きしてよいか確認する
     const hasInput = title.trim() || steps.some(st => st.trim()) || ingredients.some(ing => ing.name.trim());
     if (hasInput && !window.confirm('入力中の内容を、読み取った内容で置き換えますか？')) return;
@@ -59,6 +59,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     setTags(draft.tags);
     setIngredients(draft.ingredients.length > 0 ? draft.ingredients : [EMPTY_INGREDIENT]);
     setSteps(draft.steps.length > 0 ? draft.steps : ['']);
+    if (url) setSourceUrl(url);
   };
 
   // 材料の i 行目の name か amount を書き換える
@@ -104,8 +105,14 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     try {
       // 保存して、一覧を読み直すまで待つ。失敗したら catch へ（トーストは useSaveRecipe が出す）
       const id = await saveRecipe.mutateAsync({ recipeId: recipe?.id ?? null, input });
+      // 追加したら一覧へ（続けて次のレシピを探せる）、編集したら詳細へ（直した結果をその場で確かめる）
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
-      navigate(`/recipes/${id}`, { replace: true });
+      navigate(isEdit ? `/recipes/${id}` : '/', { replace: true });
+      // 保存して一覧・詳細に遷移する際は一番上に移動する
+      window.scrollTo({
+        top: 0,
+        behavior: 'instant', // パッと一瞬で上に移動（ふわっとさせたい場合は 'smooth'）
+      });
       toast.success(isEdit ? 'レシピを更新しました' : 'レシピを追加しました');
     } catch {
       // 失敗したときは画面を移らず、入力した内容をそのまま残す
