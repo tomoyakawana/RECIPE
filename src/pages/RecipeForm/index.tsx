@@ -105,8 +105,9 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     try {
       // 保存して、一覧を読み直すまで待つ。失敗したら catch へ（トーストは useSaveRecipe が出す）
       const id = await saveRecipe.mutateAsync({ recipeId: recipe?.id ?? null, input });
+      // 追加したら一覧へ（続けて次のレシピを探せる）、編集したら詳細へ（直した結果をその場で確かめる）
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
-      navigate(`/recipes/${id}`, { replace: true });
+      navigate(isEdit ? `/recipes/${id}` : '/', { replace: true });
       toast.success(isEdit ? 'レシピを更新しました' : 'レシピを追加しました');
     } catch {
       // 失敗したときは画面を移らず、入力した内容をそのまま残す
