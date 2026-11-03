@@ -108,11 +108,6 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       // 追加したら一覧へ（続けて次のレシピを探せる）、編集したら詳細へ（直した結果をその場で確かめる）
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
       navigate(isEdit ? `/recipes/${id}` : '/', { replace: true });
-      // 保存して一覧・詳細に遷移する際は一番上に移動する
-      window.scrollTo({
-        top: 0,
-        behavior: 'instant', // パッと一瞬で上に移動（ふわっとさせたい場合は 'smooth'）
-      });
       toast.success(isEdit ? 'レシピを更新しました' : 'レシピを追加しました');
     } catch {
       // 失敗したときは画面を移らず、入力した内容をそのまま残す
