@@ -546,7 +546,9 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 ### 運用
 - [ ] **CI（GitHub Actions）が ✅** になっている（PR の画面、または Actions タブ）
 - [ ] マイグレーションはコミット済みのものだけを `db push` している
+- [ ] マイグレーションを足したら、[docs/DATABASE.md](docs/DATABASE.md) も直している
 - [ ] ダッシュボードや DBeaver でスキーマを直接変えていない
+- [ ] 画面を足したり、画面の移り方を変えたりしたら、[docs/DESIGN.md](docs/DESIGN.md) も直している
 
 ---
 

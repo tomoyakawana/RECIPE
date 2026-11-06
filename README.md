@@ -96,13 +96,15 @@ supabase/
   functions/    Edge Function（AI の読み取り：parse-recipe）
   tests/        SQL のテスト
   seed.sql      ローカル用のダミーデータ
-docs/           開発環境の構築手順
+docs/           設計書・開発環境の構築手順
 ```
 
 ## ドキュメント
 
 | ファイル | 中身 |
 |---|---|
+| [docs/DESIGN.md](docs/DESIGN.md) | 設計書（画面の一覧と遷移） |
+| [docs/DATABASE.md](docs/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
 | [docs/SETUP.md](docs/SETUP.md) | 開発環境の構築手順（ローカルの Supabase、iPhone からの確認、困ったとき） |
 | [HANDOFF.md](HANDOFF.md) | 設計判断とその理由、本番反映の記録、リリースの手順 |
 | [REQUIREMENTS.md](REQUIREMENTS.md) | 動作環境・外部サービスの要件の検討メモ |
