@@ -11,6 +11,12 @@
 
 > 新規登録は閉じているため、本番のアプリは2人のアカウントでしか使えません。
 
+| レシピ一覧 | レシピ詳細 | AI で取り込む | リクエスト |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/images/01-recipe-list.png" width="200" alt="レシピ一覧"> | <img src="docs/images/02-recipe-detail.png" width="200" alt="レシピ詳細"> | <img src="docs/images/03-recipe-add.png" width="200" alt="レシピの追加（URL から AI で取り込む）"> | <img src="docs/images/04-request.png" width="200" alt="リクエスト（カレンダー）"> |
+
+※ スクリーンショットは、開発用のダミーデータで撮影したものです。
+
 ---
 
 ## 主な機能
