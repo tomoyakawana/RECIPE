@@ -549,6 +549,7 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 - [ ] マイグレーションを足したら、[docs/DATABASE.md](docs/DATABASE.md) も直している
 - [ ] ダッシュボードや DBeaver でスキーマを直接変えていない
 - [ ] 画面を足したり、画面の移り方を変えたりしたら、[docs/DESIGN.md](docs/DESIGN.md) も直している
+- [ ] 機能を足したり、機能のルール・文言を変えたりしたら、[docs/FEATURES.md](docs/FEATURES.md) も直している
 
 ---
 

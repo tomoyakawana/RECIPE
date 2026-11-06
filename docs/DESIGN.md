@@ -4,7 +4,7 @@
 
 画面・DB・処理を変えたら、ここも一緒に直す。
 
-> DB（ER 図・テーブル定義・DB 関数・権限）は [DATABASE.md](DATABASE.md) にまとめた。AI の読み取りは [HANDOFF.md](../HANDOFF.md) の 18 を参照。
+> 機能ごとのルールは [FEATURES.md](FEATURES.md)、DB（ER 図・テーブル定義・DB 関数・権限）は [DATABASE.md](DATABASE.md) にまとめた。
 
 ---
 
@@ -47,9 +47,9 @@ flowchart TD
   Login -->|ログイン| List
   List -->|レシピを押す| Detail
   List -->|＋ 追加| New
-  New -->|保存| List
+  New -->|保存・キャンセル| List
   Detail -->|編集| Edit
-  Edit -->|保存| Detail
+  Edit -->|保存・キャンセル| Detail
   Todo -->|レシピを押す| Detail
   History -->|レシピを押す| Detail
   Settings -->|ログアウト| Login
@@ -63,6 +63,7 @@ flowchart TD
 |---|---|---|
 | ログインしていないとき | ログイン以外の画面を開くと `/login` へ移す。ログインしたら、開こうとしていた画面へ戻す | `src/components/common/RequireAuth.tsx`、`src/pages/Login/` |
 | 保存した後の移り先 | 追加したら一覧、編集したら詳細へ。どちらも履歴を置き換える（「戻る」でフォームに戻らない） | `src/pages/RecipeForm/`（理由は HANDOFF 18「保存した後の移り先」） |
+| フォームのキャンセル | 「‹ キャンセル」で、追加なら一覧、編集なら詳細へ戻る（保存しない） | `src/pages/RecipeForm/` |
 | スクロールの位置 | 画面を移ったら一番上から見せる。「戻る」（iPhone の左端からのスワイプも）のときは、元の位置をブラウザに任せる | `src/components/layout/MainLayout/`（HANDOFF 18「保存した後は一番上から見せる」） |
 | 詳細の「戻る」 | 来た画面（一覧・リクエスト・作ったご飯）へ戻る | `src/pages/RecipeDetail/` |
 | シークレットモード | オンのときは「リクエスト」のタブを出さない。`/todo` を直接開いても一覧へ移す。設定を読み終わるまではタブも画面も出さない（一瞬でも予定が見えないように） | `MainLayout`、`src/pages/Todo/`（HANDOFF 15「予定日の表示をユーザーごとに分ける」） |

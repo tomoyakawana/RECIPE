@@ -109,6 +109,7 @@ docs/           設計書・開発環境の構築手順
 
 | ファイル | 中身 |
 |---|---|
+| [docs/FEATURES.md](docs/FEATURES.md) | 機能定義書（機能ごとの入力・ルール・エラー） |
 | [docs/DESIGN.md](docs/DESIGN.md) | 設計書（画面の一覧と遷移） |
 | [docs/DATABASE.md](docs/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
 | [docs/SETUP.md](docs/SETUP.md) | 開発環境の構築手順（ローカルの Supabase、iPhone からの確認、困ったとき） |
