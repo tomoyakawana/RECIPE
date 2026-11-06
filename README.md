@@ -1,69 +1,118 @@
 # なに食べたい？
 
-夫婦で共有する料理レシピアプリ（React + TypeScript + PWA）。
+夫婦2人で使う、料理レシピの共有アプリです。iPhone のホーム画面に追加して使う PWA として作り、実際に毎日使っています。
 
-## 開発
+レシピサイトの URL・写真・文章から AI でレシピを取り込めます。リクエストに入れた料理は、カレンダーで作る日を決められます。
 
-```bash
-npm install      # 初回のみ
-npm run dev      # 開発サーバー（http://localhost:5173）
-npm run build    # 本番ビルド（dist/ に出力。PWA の Service Worker もここで生成）
-npm run preview  # ビルド結果をローカルで確認
-npm run lint     # oxlint による静的チェック
-```
+- **利用者**：自分と妻の2人（どちらも iPhone）
+- **体制**：1人で企画・設計・開発・運用
+- **費用**：0円（すべて無料枠の範囲で運用）
+- **バージョン**：v1.1（[リリース一覧](https://github.com/tomoyakawana/RECIPE/releases)）
 
-PWA（Service Worker）は `npm run dev` では動かない。確認するときは `build` → `preview` を使う。
+> 新規登録は閉じているため、本番のアプリは2人のアカウントでしか使えません。
 
-## ローカルの DB（Supabase）
+| レシピ一覧 | レシピ詳細 | AI で取り込む | リクエスト |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/images/01-recipe-list.png" width="200" alt="レシピ一覧"> | <img src="docs/images/02-recipe-detail.png" width="200" alt="レシピ詳細"> | <img src="docs/images/03-recipe-add.png" width="200" alt="レシピの追加（URL から AI で取り込む）"> | <img src="docs/images/04-request.png" width="200" alt="リクエスト（カレンダー）"> |
 
-`npm run dev` は**ローカルの Supabase**（Docker）につなぐ。本番の DB には触らない（理由は [HANDOFF.md](HANDOFF.md) の 24）。
-`npm run build`（本番）は今までどおり本番の DB を使う。
+※ スクリーンショットは、開発用のダミーデータで撮影したものです。
 
-```bash
-npx supabase start -x logflare,vector  # 起動（Docker Desktop を先に起動しておく。初回はダウンロードで時間がかかる）
-npx supabase stop                      # 停止（データは残る）
-npx supabase db reset                  # 初期状態に戻す（マイグレーション → supabase/seed.sql のダミーデータ）
-npx supabase status                    # URL などの確認
-```
+---
 
-- テスト用のユーザー（ローカル専用）：夫役 `otto@example.com`／妻役 `tsuma@example.com`、パスワードはどちらも `password123`
-- 管理画面（Studio）：http://127.0.0.1:54323
-- **どちらにつながっているかの見分け方**：設定画面のメールアドレスが `@example.com` ならローカル
+## 主な機能
 
-### 初回の設定（`.env.development.local`、Git には入れない）
+| 画面 | できること |
+|---|---|
+| **レシピ** | 一覧・検索、タグ・お気に入り・「⏱ 20分以内」での絞り込み。詳細では材料・作り方と、夫婦で共有する「ひとことメモ」を見られる |
+| **追加・編集** | **AI で取り込む**：レシピサイトの URL、写真（スクショ）、コピーした文章から、料理名・材料・作り方・タグを読み取って入力欄に入れる。保存は人が確認してから |
+| **リクエスト** | 食べたい料理を入れて、カレンダーで作る日を決める。作ったら「作った！」で記録する |
+| **シークレットモード** | 予定（作る日）を相手に隠す。妻の「何をいつ作るかはサプライズにしたい」という要望から作った |
+| **メモ** | 買い物リストと、夫婦で共有するメモ |
+| **作ったご飯** | 作った記録の一覧 |
 
-`npm run dev` のときだけ読まれ、`.env.local`（本番の接続先）より優先される。
+## 技術
 
-```bash
-eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
-printf 'VITE_SUPABASE_URL=http://%s.local:54321\nVITE_SUPABASE_PUBLISHABLE_KEY=%s\n' "$(scutil --get LocalHostName)" "$PUBLISHABLE_KEY" > .env.development.local
-```
-
-URL を `127.0.0.1` ではなく Mac の名前にしているのは、iPhone（`npm run dev -- --host`）からも同じ設定でつながるようにするため。
-
-### AI 取り込みをローカルで使うとき（任意）
-
-キーを置かなければ、AI 取り込みだけ使えない（ほかは動く）。使うときは、キーを画面に出さずにファイルへ書いてから、Supabase を起動し直す。
-
-```bash
-read -rs "KEY?Gemini の API キー: " && printf 'GEMINI_API_KEY=%s\n' "$KEY" > supabase/functions/.env && unset KEY
-npx supabase stop && npx supabase start -x logflare,vector
-```
-
-`supabase/functions/.env` は Git に入れない（`.gitignore` 済み）。
-
-## 環境
-
-| 環境 | URL | 使いどころ |
+| 分類 | 使っているもの | 選んだ理由 |
 |---|---|---|
-| ローカル | http://localhost:5173 / iPhone からは http://MacBook-Pro-TK.local:5173 | 実装しながら確認する |
-| プレビュー（develop） | https://develop.recipe-dph.pages.dev | PWA としての動作を iPhone で確かめる |
-| 本番（main） | https://recipe-dph.pages.dev | 夫婦で実際に使う |
+| フロント | React 19 / TypeScript / Vite / Tailwind CSS v4 | React は実務で経験がある。TypeScript はこのアプリで新しく身につけた |
+| PWA | vite-plugin-pwa | ネイティブアプリ（Swift など）は配布に有料の登録が必要で、「費用0円」と両立しないため |
+| データ取得 | TanStack Query | キャッシュ・再取得・保存中の状態を任せる。サーバーを正として、端末側はキャッシュとして扱う（iOS の Safari は端末の保存データを消すことがあるため） |
+| バックエンド | Supabase（PostgreSQL・認証・Edge Functions〈Deno〉） | 中身が PostgreSQL で、SQL の知識がそのまま使える。自前のサーバーを持たずに済む |
+| AI | Gemini API | レシピの読み取りに使う。出力の形を JSON のスキーマで決めて返させる |
+| ホスティング | Cloudflare Pages | main は本番、develop はプレビューとして自動でデプロイ |
+| CI | GitHub Actions | PR のたびに lint・ビルド（型チェック）・Edge Function の型チェック |
 
-- iPhone からローカルを見るときは `npm run dev -- --host` で起動し、**http://MacBook-Pro-TK.local:5173** を開く（同じ Wi-Fi に接続すること）
-  - Mac の名前（Bonjour）で開くので、IP アドレスが変わっても使える。名前は `scutil --get LocalHostName` で確認できる
-  - 開けないときは、起動時に表示される `Network:` の URL（IP アドレス）を使う
-- develop / main に push すると Cloudflare Pages が自動でデプロイする
-- ブランチ運用は develop で実装 → ローカル検証 → main にマージ（詳細は [CLAUDE.md](CLAUDE.md)）
+### 構成
 
-設計方針や経緯は [HANDOFF.md](HANDOFF.md)、作業ルールは [CLAUDE.md](CLAUDE.md) を参照。
+```mermaid
+flowchart LR
+  iPhone["iPhone<br/>（ホーム画面の PWA）"] -->|画面の配信| CF["Cloudflare Pages"]
+  iPhone -->|データの読み書き<br/>（RLS で保護）| DB[("Supabase<br/>PostgreSQL・認証")]
+  iPhone -->|レシピの読み取り| EF["Supabase<br/>Edge Function"]
+  EF -->|許可した3サイトだけ| Sites["レシピサイト"]
+  EF -->|API キーはここだけ| Gemini["Gemini API"]
+```
+
+## 工夫したところ
+
+### AI の読み取りを安定させる
+- URL から取り込むときは、ページの HTML を丸ごと AI に渡さず、レシピサイトが載せている**構造化データ（schema.org の JSON-LD）を先に取り出して、必要な部分だけ渡す**。読み取りが速く、正確になり、無料枠の消費も減る
+- AI の返す形は JSON のスキーマで決め、受け取った後も **Zod で検証**する。形が崩れた結果がフォームに入らないようにしている
+- 読み取った結果はフォームに入れるだけで、保存は人が確認してから
+
+### セキュリティ
+- **SSRF 対策**：サーバーが外部の URL を取りに行くので、取りに行く先を**許可リストの3サイトだけ**にしている。https だけを許可し、リダイレクトの行き先も1回ずつ確かめる。タイムアウトと読み込むサイズの上限も付けている
+- **秘密情報はサーバー側だけ**：Gemini の API キーは Edge Function の Secrets にだけ置き、フロントにも git にも入れない
+- **DB の権限**：すべてのテーブルに RLS を有効にし、GRANT もテーブルごとに必要な分だけ付けている。DB 関数は実行できるロールを絞っている
+- **新規登録は閉じている**：アカウントは夫婦の2つだけ
+- 本番に出す前のチェックリストを用意して、機能を足すたびに確認している（[HANDOFF.md](HANDOFF.md) の 16）
+
+### 費用0円で運用する
+- 料金・無料枠は変わるので、決めるときは公式のページで確かめて記録している
+- AI の取り込みは、写真よりデータの小さい「文章」や「URL」から読めるようにして、無料枠を節約している
+
+### 本番のデータを守る開発環境
+- `npm run dev` はローカルの Supabase（Docker）とダミーデータで動く。開発中に本番のデータ（妻の予定など）に触れない
+- DB の変更は、すべてマイグレーションのファイルで管理する
+- SQL のテストを用意し、素の PostgreSQL の上でマイグレーションから流して確かめられる（`supabase/tests/`）
+
+## 開発の進め方
+
+1人の開発でも、チームでの開発と同じ流れで進めています。
+
+1. やることは **GitHub の Issue** で管理する。目的ごとに親の Issue を作って作業を子としてぶら下げ、優先度のラベルとマイルストーン（バージョン）を付ける
+2. **develop から Issue ごとのブランチ**を切って実装する
+3. **develop への PR**：CI が通り、ローカルとプレビュー（iPhone の実機）で確認してからマージする
+4. **リリース**：develop → main の PR で本番に出す。バージョンを上げ、タグと [GitHub の Release](https://github.com/tomoyakawana/RECIPE/releases) を作る。手順は [HANDOFF.md](HANDOFF.md) の 23
+5. **決めたことは理由と一緒に記録する**（[HANDOFF.md](HANDOFF.md)）。後から「なぜこうしたか」をたどれるようにしている
+
+AI コーディングアシスタント（Claude Code）と一緒に開発しています。設計と判断は自分で行い、急いで使えるようにしたい機能は実装を任せ、身につけたい部分は自分で書いてレビューしてもらっています。Claude 向けの作業ルールは [CLAUDE.md](CLAUDE.md) にあります。
+
+## ディレクトリ構成
+
+```
+src/
+  pages/        画面（1画面1フォルダ）
+  components/   共通の部品・レイアウト
+  api/          Supabase とのやり取り
+  contexts/     ログイン状態・トーストなど、アプリ全体で使うもの
+  hooks/ utils/ types/
+supabase/
+  migrations/   DB のマイグレーション
+  functions/    Edge Function（AI の読み取り：parse-recipe）
+  tests/        SQL のテスト
+  seed.sql      ローカル用のダミーデータ
+docs/           設計書・開発環境の構築手順
+```
+
+## ドキュメント
+
+| ファイル | 中身 |
+|---|---|
+| [docs/FEATURES.md](docs/FEATURES.md) | 機能定義書（機能ごとの入力・ルール・エラー） |
+| [docs/DESIGN.md](docs/DESIGN.md) | 設計書（画面の一覧と遷移） |
+| [docs/DATABASE.md](docs/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
+| [docs/SETUP.md](docs/SETUP.md) | 開発環境の構築手順（ローカルの Supabase、iPhone からの確認、困ったとき） |
+| [HANDOFF.md](HANDOFF.md) | 設計判断とその理由、本番反映の記録、リリースの手順 |
+| [REQUIREMENTS.md](REQUIREMENTS.md) | 動作環境・外部サービスの要件の検討メモ |
+| [CLAUDE.md](CLAUDE.md) | AI コーディングアシスタント向けの作業ルール |
