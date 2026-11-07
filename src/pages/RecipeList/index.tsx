@@ -143,7 +143,7 @@ const RecipeListPage = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => addToTodo.mutate(r.id)}
+                  onClick={() => addToTodo.mutate({ recipeId: r.id, plannedOn: undefined })}
                   disabled={addToTodo.isPending}
                   className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                 >

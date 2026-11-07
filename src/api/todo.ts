@@ -21,10 +21,18 @@ export const fetchTodoItems = async (): Promise<TodoItem[]> => {
   }));
 };
 
-/** 日付未定で追加する（日付未定の同じ料理がすでにあれば、DB の一意制約で 23505 になる） */
-export const addTodoItem = async (recipeId: string): Promise<void> => {
-  const { error } = await supabase.from('todo_items').insert({ recipe_id: recipeId });
+/**
+ * 予定日を指定して追加する（同じ日（日付未定どうしも含む）に同じ料理があれば 23505）
+ * 追加した行の id を返す（予定を入れるシートで、入れた行の日付をその場で直すため）
+ */
+export const addTodoItem = async (recipeId: string, plannedOn: string | undefined): Promise<string> => {
+  const { data, error } = await supabase
+    .from('todo_items')
+    .insert({ recipe_id: recipeId, planned_on: plannedOn ?? null })
+    .select('id')
+    .single();
   if (error) throw error;
+  return data.id;
 };
 
 /** 予定日を変える（undefined で日付未定に戻す）。同じ日に同じ料理があれば 23505 */

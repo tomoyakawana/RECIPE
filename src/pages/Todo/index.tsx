@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router';
+import AddPlanSheet from '../../components/common/AddPlanSheet';
+import DatePill from '../../components/common/DatePill';
 import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
@@ -13,30 +15,6 @@ import type { Recipe } from '../../types/recipe';
 import type { TodoItem } from '../../types/todo';
 import { addDays, fmtYmd, todayYmd } from '../../utils/date';
 import { pickRecipeStyle } from '../../utils/recipeStyle';
-
-/* ---- 予定日を選ぶボタン（中身はブラウザ標準の日付入力） ---- */
-// 透明な <input type="date"> をボタンに重ねて、タップで iOS 標準のカレンダーを開く
-const DatePill = ({ value, onChange }: { value?: string; onChange: (v: string | undefined) => void }) => (
-  <label
-    className={`relative inline-flex min-h-9 items-center whitespace-nowrap rounded-full px-3 text-xs font-bold ${
-      value ? 'bg-stone-100 text-stone-700' : 'bg-brand/10 text-brand'
-    }`}
-  >
-    📅 {value ? fmtYmd(value) : '日付を決める'}
-    <input
-      type="date"
-      value={value ?? ''}
-      // iOS の「消去」で空文字になる → 日付未定に戻す
-      onChange={e => onChange(e.target.value || undefined)}
-      // PC の Chrome は入力欄をクリックしただけではカレンダーが開かないので、明示的に開く
-      onClick={e => {
-        try { e.currentTarget.showPicker(); } catch { /* 未対応のブラウザは標準の動きに任せる */ }
-      }}
-      aria-label="作る予定日"
-      className="absolute inset-0 opacity-0"
-    />
-  </label>
-);
 
 /* ---- リクエストの 1件 ---- */
 type CardProps = {
@@ -99,6 +77,7 @@ const TodoPage = () => {
   const toast        = useToast();
   const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [notice, setNotice]     = useState('');
 
   // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
@@ -187,6 +166,13 @@ const TodoPage = () => {
       <div className="md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:items-start md:gap-6">
         <div className="mb-5 md:sticky md:top-4 md:mb-0">
           <MonthCalendar today={today} marks={marks} selected={selected} onSelect={handleSelect} />
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="mt-3 min-h-11 w-full rounded-full bg-brand/10 px-4 text-sm font-bold text-brand"
+          >
+            ＋ 予定を入れる
+          </button>
         </div>
 
         <div>
@@ -236,6 +222,8 @@ const TodoPage = () => {
           )}
         </div>
       </div>
+      {/* シートは画面のいちばん外側に置く。PC の幅ではカレンダーの列が sticky になり、その中に置くと、右の列のカードより前に出られないため */}
+      {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
     </>
   );
 };
