@@ -173,7 +173,7 @@ const TodoPage = () => {
           >
             ＋ 予定を入れる
           </button>
-          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} />}
+          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
         </div>
 
         <div>
