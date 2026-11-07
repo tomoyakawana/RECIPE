@@ -20,6 +20,8 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const [date, setDate] = useState(initialDate);
   const setPlannedOn = useSetPlannedOn();
   const toast = useToast();
+  // 「選ぶ」の通信中かどうか（通信はこのファイルで呼んでいるので、ここで分かる）
+  const busy = setPlannedOn.isPending;
 
   const handlePick = (todoId: string , title: string) => {
     setPlannedOn.mutate({ todoId, plannedOn: date }, {
@@ -59,15 +61,28 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
           ✕
           </button>
         </div>
-        <ul>
-        {requests.map(({ item, recipe }) => (
-          <li key={item.id}>
-          <button type="button" onClick={() => handlePick(item.id, recipe.title)}>
-            {recipe.title}
-          </button>
-          </li>
-        ))}
-        </ul>
+        <section>
+          <h2 className="mb-2 text-sm font-bold text-stone-500">🙋 リクエストから選ぶ</h2>
+          {requests.length === 0 ? (
+            <p className="text-sm text-stone-500">日付未定のリクエストはありません</p>
+          ) : (
+            <ul className="grid gap-2">
+              {requests.map(({ item, recipe }) => (
+                <li key={item.id} className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2">
+                  <span className="min-w-0 flex-1 truncate font-bold">{recipe.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => handlePick(item.id, recipe.title)}
+                    disabled={busy}
+                    className="min-h-9 shrink-0 rounded-full bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    選ぶ
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
      </div>
   );
