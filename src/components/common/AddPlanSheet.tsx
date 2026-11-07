@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fmtYmd, todayYmd } from '../../utils/date';
+import { addDays, fmtYmd, todayYmd } from '../../utils/date';
 import type { TodoItem } from '../../types/todo';
 import type { Recipe } from '../../types/recipe';
 import { useSetPlannedOn } from '../../hooks/useTodo';
@@ -18,6 +18,7 @@ type Props = {
 /** 予定を入れるシート（日付を選んで、リクエストやレシピから、その日の予定を入れる） */
 const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const [date, setDate] = useState(initialDate);
+  const today = todayYmd();
   const setPlannedOn = useSetPlannedOn();
   const toast = useToast();
   // 「選ぶ」の通信中かどうか（通信はこのファイルで呼んでいるので、ここで分かる）
@@ -25,7 +26,8 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
 
   const handlePick = (todoId: string , title: string) => {
     setPlannedOn.mutate({ todoId, plannedOn: date }, {
-        onSuccess: () => { toast.success(`${fmtYmd(date)} に ${title} を入れました`) ; onClose()},
+        // シートは閉じない（続けて別の日の分も選べるように）。閉じるのは ✕
+        onSuccess: () => toast.success(`${fmtYmd(date)} に ${title} を入れました`),
         onError: error => {
             if ((error as { code?: string }).code === '23505') toast.error(`その日にはすでに同じレシピが入っています`);
             else toast.error(dbErrorMessage(error));
@@ -34,24 +36,51 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-black/40">
+    <div
+      className="fixed inset-0 z-40 bg-black/40"
+      // シートの外（暗いところ）を押したら閉じる。シートの中を押したときは閉じない
+      onClick={e => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-white p-4 max-w-lg mx-auto">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">予定を入れる</h2>
-          <input
-            type="date"
-            value={date}
-            // 空なら何もしない（日付は必ず要るので、元の日付のままにする）
-            onChange={e => {
-              if (e.target.value) setDate(e.target.value);
-            }}
-            // PC の Chrome は入力欄をクリックしただけではカレンダーが開かないので、明示的に開く
-            onClick={e => {
-              try { e.currentTarget.showPicker(); } catch { /* 未対応のブラウザは標準の動きに任せる */ }
-            }}
-            min={todayYmd()}
-            aria-label="予定を入れる日付"
-          />
+          {/* ‹ › で1日ずつ動かす（シートを開いたまま、何日分かをまとめて決められるように） */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setDate(addDays(date, -1))}
+              // 今日より前には戻れない
+              disabled={date <= today}
+              aria-label="前の日"
+              className="flex size-9 items-center justify-center rounded-full text-xl text-stone-500 disabled:opacity-30"
+            >
+              ‹
+            </button>
+            <input
+              type="date"
+              value={date}
+              // 空なら何もしない（日付は必ず要るので、元の日付のままにする）
+              onChange={e => {
+                if (e.target.value) setDate(e.target.value);
+              }}
+              // PC の Chrome は入力欄をクリックしただけではカレンダーが開かないので、明示的に開く
+              onClick={e => {
+                try { e.currentTarget.showPicker(); } catch { /* 未対応のブラウザは標準の動きに任せる */ }
+              }}
+              min={today}
+              aria-label="予定を入れる日付"
+            />
+            <button
+              type="button"
+              onClick={() => setDate(addDays(date, 1))}
+              aria-label="次の日"
+              className="flex size-9 items-center justify-center rounded-full text-xl text-stone-500"
+            >
+              ›
+            </button>
+          </div>
           <button
             type="button"
             onClick={onClose}
