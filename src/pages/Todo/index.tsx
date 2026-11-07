@@ -173,7 +173,6 @@ const TodoPage = () => {
           >
             ＋ 予定を入れる
           </button>
-          {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
         </div>
 
         <div>
@@ -223,6 +222,8 @@ const TodoPage = () => {
           )}
         </div>
       </div>
+      {/* シートは画面のいちばん外側に置く。PC の幅ではカレンダーの列が sticky になり、その中に置くと、右の列のカードより前に出られないため */}
+      {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
     </>
   );
 };

@@ -75,14 +75,15 @@ const AddPlanSheet = ({ onClose, initialDate, requests, recipes }: Props) => {
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/40"
+      // iPhone の幅では下からせり出す形、PC の幅（md 以上）では画面の真ん中に出す
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 md:items-center md:p-6"
       // シートの外（暗いところ）を押したら閉じる。シートの中を押したときは閉じない
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       {/* 高さは画面の 85% まで。見出しと日付は止めておき、その下だけスクロールする */}
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[85dvh] max-w-lg flex-col rounded-t-3xl bg-white">
+      <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-3xl bg-white md:rounded-3xl">
         <div className="flex shrink-0 items-center justify-between p-4 pb-3">
           <h2 className="text-lg font-bold">予定を入れる</h2>
           {/* ‹ › で1日ずつ動かす（シートを開いたまま、何日分かをまとめて決められるように） */}
