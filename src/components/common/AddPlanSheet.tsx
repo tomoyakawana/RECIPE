@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DatePill from './DatePill';
 import { addDays, fmtYmd, todayYmd } from '../../utils/date';
 import type { TodoItem } from '../../types/todo';
 import type { Recipe } from '../../types/recipe';
@@ -11,7 +12,7 @@ type Props = {
   onClose: () => void;
   // 初期表示する日付（YYYY-MM-DD）を渡す。選んだ日付があればそれを、なければ今日の日付を渡す
   initialDate: string;
-  // 予定を入れる候補のリスト（リクエストとレシピの組み合わせ）
+  // リクエストの全件（リクエストとレシピの組み合わせ）。出すのは、日付未定のものと、このシートで入れたもの
   requests: { item: TodoItem; recipe: Recipe }[];
 };
 
@@ -23,16 +24,33 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
   const toast = useToast();
   // 「選ぶ」の通信中かどうか（通信はこのファイルで呼んでいるので、ここで分かる）
   const busy = setPlannedOn.isPending;
+  // このシートで入れたリクエスト。日付が入ると「日付未定」ではなくなるが、閉じるまでは一覧に残して、日付を直せるようにする
+  const [pickedIds, setPickedIds] = useState<Set<string>>(new Set());
+  const list = requests.filter(({ item }) => !item.plannedOn || pickedIds.has(item.id));
 
   const handlePick = (todoId: string , title: string) => {
     setPlannedOn.mutate({ todoId, plannedOn: date }, {
         // シートは閉じない（続けて別の日の分も選べるように）。閉じるのは ✕
-        onSuccess: () => toast.success(`${fmtYmd(date)} に ${title} を入れました`),
+        onSuccess: () => {
+          setPickedIds(prev => new Set(prev).add(todoId));
+          toast.success(`${fmtYmd(date)} に ${title} を入れました`);
+        },
         onError: error => {
             if ((error as { code?: string }).code === '23505') toast.error(`その日にはすでに同じレシピが入っています`);
             else toast.error(dbErrorMessage(error));
           },
         });
+  };
+
+  // 入れた後に、行の 📅 で日付を変える（「消去」なら日付未定に戻る）
+  const handleChangeDate = (todoId: string, title: string, value: string | undefined) => {
+    setPlannedOn.mutate({ todoId, plannedOn: value }, {
+      onSuccess: () => toast.success(value ? `${title} を ${fmtYmd(value)} に変えました` : `${title} を日付未定に戻しました`),
+      onError: error => {
+        if ((error as { code?: string }).code === '23505') toast.error('その日にはすでに同じレシピが入っています');
+        else toast.error(dbErrorMessage(error));
+      },
+    });
   };
 
   return (
@@ -92,23 +110,37 @@ const AddPlanSheet = ({ onClose, initialDate, requests }: Props) => {
         </div>
         <section>
           <h2 className="mb-2 text-sm font-bold text-stone-500">🙋 リクエストから選ぶ</h2>
-          {requests.length === 0 ? (
+          {list.length === 0 ? (
             <p className="text-sm text-stone-500">日付未定のリクエストはありません</p>
           ) : (
             <ul className="grid gap-2">
-              {requests.map(({ item, recipe }) => (
-                <li key={item.id} className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2">
-                  <span className="min-w-0 flex-1 truncate font-bold">{recipe.title}</span>
-                  <button
-                    type="button"
-                    onClick={() => handlePick(item.id, recipe.title)}
-                    disabled={busy}
-                    className="min-h-9 shrink-0 rounded-full bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
-                  >
-                    選ぶ
-                  </button>
-                </li>
-              ))}
+              {list.map(({ item, recipe }) => {
+                // 日付が入っていれば「入れた」状態（日付を消去すれば、また選べる）
+                const picked = !!item.plannedOn;
+                return (
+                  <li key={item.id} className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2">
+                    <span className="min-w-0 flex-1 truncate font-bold">{recipe.title}</span>
+                    <span className="shrink-0">
+                      <DatePill
+                        value={item.plannedOn}
+                        onChange={v => handleChangeDate(item.id, recipe.title, v)}
+                        min={today}
+                        disabled={!picked || busy}
+                      />
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handlePick(item.id, recipe.title)}
+                      disabled={picked || busy}
+                      className={`min-h-9 shrink-0 rounded-full px-4 text-sm font-bold ${
+                        picked ? 'bg-stone-100 text-stone-400' : 'bg-brand text-white disabled:opacity-50'
+                      }`}
+                    >
+                      {picked ? '入れた' : '選ぶ'}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
