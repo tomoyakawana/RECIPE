@@ -12,7 +12,7 @@ import { supabase } from '../utils/supabaseClient';
 
 // レシピ本体に、材料と手順をぶら下げて1回で読む（外部キーをたどって結合してくれる、PostgREST の書き方）
 const RECIPE_COLUMNS = `
-  id, title, cook_minutes, servings, tags, is_favorite, source_url, note,
+  id, title, cook_minutes, servings, tags, is_favorite, source_url, note, image_path,
   recipe_ingredients ( position, name, amount ),
   recipe_steps ( position, body )
 `;
@@ -55,6 +55,7 @@ const toRecipe = (row: RecipeRow): Recipe => ({
   isFavorite : row.is_favorite,
   sourceUrl  : row.source_url ?? undefined,
   note       : row.note ?? undefined,
+  imagePath  : row.image_path ?? undefined,
 });
 
 /**
@@ -73,6 +74,7 @@ type SaveRecipeArgs = {
   p_source_url  : string | null;
   p_ingredients : { name: string; amount: string }[];
   p_steps       : string[];
+  p_image_path  : string | null;
 };
 
 /**
@@ -89,6 +91,7 @@ export const saveRecipe = async (recipeId: string | null, input: RecipeInput): P
     p_source_url  : input.sourceUrl ?? null,
     p_ingredients : input.ingredients,
     p_steps       : input.steps,
+    p_image_path  : input.imagePath ?? null,
   };
   // 生成された型（null 不可）に合わせるため、ここで1回だけ型を当てはめる
   const { data, error } = await supabase.rpc(
