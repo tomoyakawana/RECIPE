@@ -25,6 +25,12 @@ const randomId = (): string =>
 /** 詳細用のパス → 一覧用のパス */
 export const toSmallPath = (path: string): string => path.replace(/large\.jpg$/, 'small.jpg');
 
+/** 写真の大きさ：small は一覧用（400px）、large は詳細用（1200px） */
+export type ImageSize = 'small' | 'large';
+
+/** 詳細用のパス → 指定した大きさのパス */
+export const toSizedPath = (path: string, size: ImageSize): string => (size === 'small' ? toSmallPath(path) : path);
+
 /**
  * 写真を縮小して2つ上げる。詳細用のパスを返す（save_recipe に渡す）
  * フォルダー名は毎回新しく作る（差し替えるときも上書きせず、別の名前で上げる）

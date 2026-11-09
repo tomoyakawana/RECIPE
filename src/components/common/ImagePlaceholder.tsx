@@ -7,7 +7,7 @@ type Props = {
   emojiSize?: string;
 };
 
-/** 写真の仮枠（写真機能を作るまで、タグに合わせた絵文字とグラデーションを出す） */
+/** 写真がないときの枠（タグに合わせた絵文字とグラデーションを出す）。写真の表示は RecipePhoto から使う */
 const ImagePlaceholder = ({ tags = [], className = '', emojiSize = 'text-4xl' }: Props) => {
   const style = pickRecipeStyle(tags);
   return (

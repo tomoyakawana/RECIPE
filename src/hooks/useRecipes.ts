@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchCookedDates, fetchRecipes, saveRecipe, updateFavorite, updateNote } from '../api/recipes';
-import { removeRecipeImage, uploadRecipeImage } from '../api/recipeImages';
+import { fetchImageUrls, removeRecipeImage, toSizedPath, uploadRecipeImage, type ImageSize } from '../api/recipeImages';
 import type { Recipe, RecipeInput } from '../types/recipe';
 import { dbErrorMessage } from '../utils/dbError';
 import { useToast } from './useToast';
@@ -14,6 +14,8 @@ export const recipeKeys = {
   // 全レシピの「作った日」をまとめて読み直すとき用（名札の先頭が一致するものが全部対象になる）
   cookedDatesAll: ['cookedDates'] as const,
   cookedDates   : (recipeId: string) => ['cookedDates', recipeId] as const,
+  // 写真の URL。大きさと、取りに行くパスの一覧ごとに分ける（写真が増えた・変わったら取り直す）
+  imageUrls     : (size: ImageSize, paths: string[]) => ['imageUrls', size, paths] as const,
 };
 
 /** 全レシピ（一覧・詳細で共有する） */
@@ -38,6 +40,26 @@ export const useCookedDates = (recipeId: string | undefined) =>
     // id がないとき（URL がおかしいとき）は読みに行かない
     enabled : !!recipeId,
   });
+
+/**
+ * 写真を表示する URL（期限付き）。全レシピの分を1回でまとめて取り、写真の部品どうしで使い回す
+ * （同じ名札なら、部品がいくつあっても通信は1回）
+ */
+export const useImageUrls = (size: ImageSize) => {
+  const { data: recipes = [] } = useRecipes();
+  // 写真があるレシピだけ、指定した大きさのパスにする
+  const paths = recipes.flatMap(r => (r.imagePath ? [toSizedPath(r.imagePath, size)] : []));
+
+  return useQuery({
+    queryKey: recipeKeys.imageUrls(size, paths),
+    queryFn : () => fetchImageUrls(paths),
+    // 写真が1枚もなければ取りに行かない
+    enabled : paths.length > 0,
+    // URL の期限（1時間）が切れる前に取り直す（画面を開きっぱなしでも切れないように）
+    staleTime      : 50 * 60 * 1000,
+    refetchInterval: 50 * 60 * 1000,
+  });
+};
 
 /**
  * お気に入りの切り替え

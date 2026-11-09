@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import type { Ingredient, Recipe, RecipeInput } from '../../types/recipe';
 import type { RecipeDraft } from '../../utils/parseRecipe';
 import { resizeImageToBase64 } from '../../utils/image';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 // 入力欄の共通スタイル（iOS の自動ズームを避けるため text-base = 16px）
 const INPUT_CLASS = 'min-h-12 w-full rounded-xl border border-stone-200 bg-white px-3 text-base outline-none focus:ring-2 focus:ring-brand/40';
@@ -163,10 +164,7 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
               {preview ? (
                 <img src={preview} alt="" className="aspect-4/3 w-full rounded-xl object-cover" />
               ) : (
-                // 保存済みの写真を出す部品は段階4で作る。それまでは枠だけ出す
-                <div className="flex aspect-4/3 w-full items-center justify-center rounded-xl bg-stone-100 text-sm text-stone-500">
-                  登録済みの写真があります
-                </div>
+                <RecipePhoto imagePath={imagePath} size="large" className="aspect-4/3 w-full rounded-xl" />
               )}
               <button
                 type="button"
