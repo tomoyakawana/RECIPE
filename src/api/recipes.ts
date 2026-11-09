@@ -23,7 +23,9 @@ const recipesQuery = () =>
     .from('recipes')
     .select(RECIPE_COLUMNS)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    // 作った日時が同じとき（まとめて入れたとき）も、毎回同じ順になるように。id は重ならないので順番が1つに決まる
+    .order('id', { ascending: false });
 
 // recipesQuery が返す1行の型。select の文字列から Supabase が推論した型を取り出している
 // QueryData<…> は結果の配列の型、[number] は「その配列の1要素の型」
