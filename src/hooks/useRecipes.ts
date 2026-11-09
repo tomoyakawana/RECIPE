@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchCookedDates, fetchRecipes, saveRecipe, updateFavorite, updateNote } from '../api/recipes';
+import { removeRecipeImage, uploadRecipeImage } from '../api/recipeImages';
 import type { Recipe, RecipeInput } from '../types/recipe';
 import { dbErrorMessage } from '../utils/dbError';
 import { useToast } from './useToast';
@@ -82,7 +83,33 @@ export const useSaveRecipe = () => {
   const toast = useToast();
 
   return useMutation({
-    mutationFn: ({ recipeId, input }: { recipeId: string | null; input: RecipeInput }) => saveRecipe(recipeId, input),
+    // imageFile    ：新しく選んだ写真（選んでいなければ undefined）
+    // oldImagePath ：編集前の写真のパス（保存できたあと、要らなくなっていれば消す）
+    mutationFn: async ({ recipeId, input, imageFile, oldImagePath }: {
+      recipeId     : string | null;
+      input        : RecipeInput;
+      imageFile?   : File;
+      oldImagePath?: string;
+    }) => {
+      // 新しい写真があれば先に上げて、そのパスで保存する
+      const newPath = imageFile ? await uploadRecipeImage(imageFile) : undefined;
+      const savedInput = newPath ? { ...input, imagePath: newPath } : input;
+
+      let id: string;
+      try {
+        id = await saveRecipe(recipeId, savedInput);
+      } catch (error) {
+        // 保存に失敗したら、上げたばかりの写真は使われないので消す（消すのに失敗しても、元のエラーを返す）
+        if (newPath) await removeRecipeImage(newPath).catch(() => {});
+        throw error;
+      }
+
+      // 差し替えた・消した前の写真を消す。失敗しても保存はできているので、エラーにしない（ファイルが1つ残るだけ）
+      if (oldImagePath && oldImagePath !== savedInput.imagePath) {
+        await removeRecipeImage(oldImagePath).catch(() => {});
+      }
+      return id;
+    },
     // Promise を返すと、それが終わるまで「保存中」が続く
     onSuccess : () => queryClient.invalidateQueries({ queryKey: recipeKeys.all }),
     onError   : error => toast.error(dbErrorMessage(error)),

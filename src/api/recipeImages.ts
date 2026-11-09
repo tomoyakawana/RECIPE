@@ -14,6 +14,14 @@ const BUCKET = 'recipe-images';
 // 署名付き URL の有効期限（秒）。画面を開いている間に切れない長さにする
 const URL_EXPIRES_IN = 60 * 60;
 
+/**
+ * フォルダー名に使うランダムな文字列（16進数で32文字）
+ * crypto.randomUUID は https か localhost でしか使えない（開発中に iPhone から LAN 経由で開くと http になる）ので、
+ * http でも使える crypto.getRandomValues で作る
+ */
+const randomId = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+
 /** 詳細用のパス → 一覧用のパス */
 export const toSmallPath = (path: string): string => path.replace(/large\.jpg$/, 'small.jpg');
 
@@ -23,7 +31,7 @@ export const toSmallPath = (path: string): string => path.replace(/large\.jpg$/,
  */
 export const uploadRecipeImage = async (file: File): Promise<string> => {
   const [large, small] = await Promise.all([resizeImageToBlob(file, 1200), resizeImageToBlob(file, 400)]);
-  const largePath = `${crypto.randomUUID()}/large.jpg`;
+  const largePath = `${randomId()}/large.jpg`;
 
   const storage = supabase.storage.from(BUCKET);
   const { error: largeError } = await storage.upload(largePath, large, { contentType: 'image/jpeg' });
