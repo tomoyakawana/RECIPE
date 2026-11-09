@@ -16,7 +16,8 @@ export const useTodoItems = () => useQuery({ queryKey: todoKeys.all, queryFn: fe
  * リクエストを書き換える操作の共通部分
  * 保存が終わったら一覧を読み直し、失敗したらトーストで知らせる
  */
-const useTodoMutation = <Vars,>(mutationFn: (vars: Vars) => Promise<void>) => {
+// Result は保存の結果の型（追加した行の id など）。何も返さない操作は void のまま
+const useTodoMutation = <Vars, Result = void>(mutationFn: (vars: Vars) => Promise<Result>) => {
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -27,8 +28,10 @@ const useTodoMutation = <Vars,>(mutationFn: (vars: Vars) => Promise<void>) => {
   });
 };
 
-/** 「＋ リクエスト」：日付未定で追加 */
-export const useAddTodo = () => useTodoMutation(addTodoItem);
+/** リクエストに追加（plannedOn を省くと日付未定） */
+export const useAddTodo = () => useTodoMutation(
+  ({ recipeId, plannedOn }: { recipeId: string; plannedOn: string | undefined }) => addTodoItem(recipeId, plannedOn)
+);
 
 /** 「🙋 食べたい！」 */
 export const useRequestRecipe = () => useTodoMutation(requestRecipe);

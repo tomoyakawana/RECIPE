@@ -13,7 +13,7 @@ import { supabase } from '../utils/supabaseClient';
 export const fetchHistory = async (): Promise<HistoryEntry[]> => {
   const { data, error } = await supabase
     .from('cook_logs')
-    .select('id, recipe_id, cooked_on, memo, recipes ( title, tags, deleted_at )')
+    .select('id, recipe_id, cooked_on, memo, recipes ( title, tags, deleted_at, image_path )')
     // 同じ日に2回作ったときは、後から記録した方を上に
     .order('cooked_on', { ascending: false })
     .order('created_at', { ascending: false });
@@ -28,6 +28,7 @@ export const fetchHistory = async (): Promise<HistoryEntry[]> => {
       title  : row.recipes.title,
       tags   : row.recipes.tags,
       deleted: row.recipes.deleted_at !== null,
+      imagePath: row.recipes.image_path ?? undefined,
     },
   }));
 };

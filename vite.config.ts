@@ -46,7 +46,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    // iPhone から Mac の名前（例：MacBook-Pro-TK.local）で開けるようにする。
+    // iPhone から Mac の名前（例：MacBook-Pro.local）で開けるようにする。
     // IP アドレスは DHCP で変わるが、.local の名前（Bonjour）は変わらない。
     // Vite は DNS リバインディング対策で、localhost と IP 以外のホスト名を既定で断るため、家の中だけで使う .local だけを許可する。
     // ※ 開発サーバー（npm run dev）だけの設定。本番・プレビューには影響しない

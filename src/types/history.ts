@@ -18,5 +18,7 @@ export type HistoryEntry = {
     tags   : string[];
     // 論理削除されたレシピなら true（詳細画面には飛べない）
     deleted: boolean;
+    // 写真のパス（詳細用）。写真がなければ undefined
+    imagePath?: string;
   };
 };

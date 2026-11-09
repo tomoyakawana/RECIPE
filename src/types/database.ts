@@ -313,6 +313,7 @@ export type Database = {
       save_recipe: {
         Args: {
           p_cook_minutes: number
+          p_image_path?: string
           p_ingredients: Json
           p_recipe_id: string
           p_servings: number

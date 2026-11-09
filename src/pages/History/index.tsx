@@ -1,10 +1,10 @@
 import { Link } from 'react-router';
-import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useHistory } from '../../hooks/useHistory';
 import type { HistoryEntry } from '../../types/history';
 import { fmtYmd } from '../../utils/date';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 /** '2026-10-16' → '2026年10月'（月ごとの見出し用） */
 const toMonthLabel = (ymd: string) => {
@@ -44,7 +44,7 @@ const HistoryPage = () => {
               // カードの中身（削除されたレシピは詳細画面がないので、リンクにしない）
               const body = (
                 <>
-                  <ImagePlaceholder tags={recipe.tags} className="size-16 shrink-0 rounded-xl" emojiSize="text-3xl" />
+                  <RecipePhoto imagePath={recipe.imagePath} tags={recipe.tags} size="small" className="size-16 shrink-0 rounded-xl" emojiSize="text-3xl" />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-brand">{fmtYmd(entry.cookedOn)}</p>
                     <p className="truncate font-bold">

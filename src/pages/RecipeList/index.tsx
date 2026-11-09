@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,6 +7,7 @@ import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
 import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd, todayYmd } from '../../utils/date';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
 const ALL   = 'すべて';
@@ -103,7 +103,7 @@ const RecipeListPage = () => {
           <li key={r.id} className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-stone-900/5">
             <div className="relative">
               <Link to={`/recipes/${r.id}`}>
-                <ImagePlaceholder tags={r.tags} className="aspect-square w-full md:aspect-[4/3]" emojiSize="text-5xl" />
+                <RecipePhoto imagePath={r.imagePath} tags={r.tags} size="small" className="aspect-square w-full md:aspect-[4/3]" emojiSize="text-5xl" />
               </Link>
               <button
                 type="button"
@@ -117,10 +117,10 @@ const RecipeListPage = () => {
               </button>
             </div>
             <div className="p-3">
-              <Link to={`/recipes/${r.id}`} className="line-clamp-2 leading-snug font-bold">
+              <Link to={`/recipes/${r.id}`} className="line-clamp-1 min-h-[1lh] leading-snug font-bold">
                 {r.title}
               </Link>
-              <p className="mt-1 text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
+              <p className="mt-1 min-h-[1lh] text-xs text-stone-500">{r.cookMinutes ? `⏱ ${r.cookMinutes}分` : ''}</p>
               {secretMode ? (
                 requestedRecipeIds.has(r.id) ? (
                   <p className="mt-2 flex min-h-9 items-center justify-center rounded-full bg-stone-100 text-xs text-stone-500">
@@ -143,7 +143,7 @@ const RecipeListPage = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => addToTodo.mutate(r.id)}
+                  onClick={() => addToTodo.mutate({ recipeId: r.id, plannedOn: undefined })}
                   disabled={addToTodo.isPending}
                   className="mt-2 min-h-9 w-full rounded-full bg-brand/10 text-xs font-bold text-brand disabled:opacity-50"
                 >
