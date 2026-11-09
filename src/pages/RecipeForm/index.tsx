@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react';
+import { useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import AiImport from '../../components/common/AiImport';
 import LoadError from '../../components/common/LoadError';
@@ -8,6 +8,8 @@ import { useRecipe, useRecipes, useSaveRecipe } from '../../hooks/useRecipes';
 import { useToast } from '../../hooks/useToast';
 import type { Ingredient, Recipe, RecipeInput } from '../../types/recipe';
 import type { RecipeDraft } from '../../utils/parseRecipe';
+import { resizeImageToBase64 } from '../../utils/image';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 // 入力欄の共通スタイル（iOS の自動ズームを避けるため text-base = 16px）
 const INPUT_CLASS = 'min-h-12 w-full rounded-xl border border-stone-200 bg-white px-3 text-base outline-none focus:ring-2 focus:ring-brand/40';
@@ -47,6 +49,14 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
   const [steps,       setSteps]       = useState<string[]>(recipe && recipe.steps.length > 0 ? recipe.steps : ['']);
   const [sourceUrl,   setSourceUrl]   = useState(recipe?.sourceUrl ?? '');
 
+  // 写真：imagePath は保存済みの写真（✕ で外したら undefined）、imageFile は新しく選んだ写真（保存するときに上げる）
+  const [imagePath,   setImagePath]   = useState(recipe?.imagePath);
+  const [imageFile,   setImageFile]   = useState<File>();
+  // 新しく選んだ写真の見本（縮めた画像を data URL にしたもの）
+  const [preview,     setPreview]     = useState<string>();
+  // 見本（新しく選んだ写真）か、保存済みの写真があれば「写真あり」
+  const hasImage = !!preview || !!imagePath;
+
   // AI が読み取った下書きをフォームに入れる（URL から取り込んだときは、その URL を参考URL に入れる）
   const applyDraft = (draft: RecipeDraft, url?: string) => {
     // すでに何か入力していたら、上書きしてよいか確認する
@@ -81,6 +91,27 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
     setSteps(prev => (prev.length === 1 ? [''] : prev.filter((_, idx) => idx !== i)));
   };
 
+  // 写真を選んだ（撮った）とき。見本は小さく縮めて出す（元の写真は大きく、そのまま出すと重いため）
+  const handlePickImage = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // 同じ写真をもう一度選んでも onChange が呼ばれるように、選択を空に戻す
+    e.target.value = '';
+    if (!file) return;
+    try {
+      setPreview(`data:image/jpeg;base64,${await resizeImageToBase64(file, 800)}`);
+      setImageFile(file);
+    } catch {
+      toast.error('写真を読み込めませんでした');
+    }
+  };
+
+  // ✕：写真を外す（保存したときに、前の写真も Storage から消える）
+  const handleRemoveImage = () => {
+    setImageFile(undefined);
+    setPreview(undefined);
+    setImagePath(undefined);
+  };
+
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     // 保存中にもう一度送られたら何もしない（ボタンは押せなくしてあるが、Enter キーでも送れるため）
@@ -100,11 +131,12 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       // 空の欄は除く
       steps      : steps.map(st => st.trim()).filter(Boolean),
       sourceUrl  : sourceUrl.trim() || undefined,
+      imagePath  : imagePath,
     };
 
     try {
       // 保存して、一覧を読み直すまで待つ。失敗したら catch へ（トーストは useSaveRecipe が出す）
-      const id = await saveRecipe.mutateAsync({ recipeId: recipe?.id ?? null, input });
+      const id = await saveRecipe.mutateAsync({ recipeId: recipe?.id ?? null, input, imageFile, oldImagePath: recipe?.imagePath });
       // 追加したら一覧へ（続けて次のレシピを探せる）、編集したら詳細へ（直した結果をその場で確かめる）
       // replace：戻るボタンで編集画面に戻らないよう、履歴を置き換える
       navigate(isEdit ? `/recipes/${id}` : '/', { replace: true });
@@ -125,6 +157,33 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       <AiImport onDraft={applyDraft} existingTags={allTags} />
 
       <div className="space-y-4">
+        <div>
+          <label className="mb-1 block text-sm font-bold">写真</label>
+          {hasImage && (
+            <div className="relative mb-2">
+              {preview ? (
+                <img src={preview} alt="" className="aspect-4/3 w-full rounded-xl object-cover" />
+              ) : (
+                <RecipePhoto imagePath={imagePath} size="large" className="aspect-4/3 w-full rounded-xl" />
+              )}
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                disabled={saveRecipe.isPending}
+                aria-label="写真を外す"
+                className="absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {/* AI 取り込みと同じく、label の中に隠した input を置く（label を押すと写真の選択が開く） */}
+          <label className="inline-flex min-h-11 cursor-pointer items-center text-sm font-bold text-brand">
+            📷 {hasImage ? '写真を変える' : '写真を付ける'}
+            <input type="file" accept="image/*" className="hidden" onChange={handlePickImage} disabled={saveRecipe.isPending} />
+          </label>
+        </div>
+
         <div>
           <label className="mb-1 block text-sm font-bold">料理名 <span className="text-red-500">*</span></label>
           <input value={title} onChange={e => setTitle(e.target.value)} required maxLength={100} className={INPUT_CLASS} placeholder="例：豚の生姜焼き" />

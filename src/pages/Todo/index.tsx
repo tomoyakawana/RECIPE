@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router';
 import AddPlanSheet from '../../components/common/AddPlanSheet';
 import DatePill from '../../components/common/DatePill';
-import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import MonthCalendar from '../../components/common/MonthCalendar';
@@ -15,6 +14,7 @@ import type { Recipe } from '../../types/recipe';
 import type { TodoItem } from '../../types/todo';
 import { addDays, fmtYmd, todayYmd } from '../../utils/date';
 import { pickRecipeStyle } from '../../utils/recipeStyle';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 /* ---- リクエストの 1件 ---- */
 type CardProps = {
@@ -31,7 +31,7 @@ type CardProps = {
 const TodoCard = ({ item, recipe, onDate, onRemove, onCooked, busy }: CardProps) => (
   <li className="flex gap-3 rounded-2xl bg-white p-2.5 shadow-sm shadow-stone-900/5">
     <Link to={`/recipes/${recipe.id}`} className="shrink-0">
-      <ImagePlaceholder tags={recipe.tags} className="size-18 rounded-xl" emojiSize="text-3xl" />
+      <RecipePhoto imagePath={recipe.imagePath} tags={recipe.tags} size="small" className="size-18 rounded-xl" emojiSize="text-3xl" />
     </Link>
     <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
       <div className="flex items-start gap-1">

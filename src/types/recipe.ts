@@ -26,6 +26,8 @@ export type Recipe = {
   sourceUrl?  : string;
   // ひとことメモ（「玉ねぎ多めが好き」など、作るときのコツや好み）。夫婦で共通
   note?       : string;
+  // 写真のパス（Storage の recipe-images バケットの中。詳細用 1200px のもの）。写真がなければ undefined
+  imagePath?  : string;
 };
 
 /**

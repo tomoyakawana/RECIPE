@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,6 +7,7 @@ import { useRecipes, useToggleFavorite } from '../../hooks/useRecipes';
 import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd, todayYmd } from '../../utils/date';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 // 絞り込みチップの「すべて」と「お気に入り」（タグ以外の特別な選択肢）
 const ALL   = 'すべて';
@@ -103,7 +103,7 @@ const RecipeListPage = () => {
           <li key={r.id} className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-stone-900/5">
             <div className="relative">
               <Link to={`/recipes/${r.id}`}>
-                <ImagePlaceholder tags={r.tags} className="aspect-square w-full md:aspect-[4/3]" emojiSize="text-5xl" />
+                <RecipePhoto imagePath={r.imagePath} tags={r.tags} size="small" className="aspect-square w-full md:aspect-[4/3]" emojiSize="text-5xl" />
               </Link>
               <button
                 type="button"

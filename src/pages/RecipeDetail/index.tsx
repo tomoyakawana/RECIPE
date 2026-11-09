@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import ImagePlaceholder from '../../components/common/ImagePlaceholder';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,6 +7,7 @@ import { useCookedDates, useRecipe, useToggleFavorite, useUpdateNote } from '../
 import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
 import { fmtYmd } from '../../utils/date';
+import RecipePhoto from '../../components/common/RecipePhoto';
 
 /* ---- ひとことメモ（タップしてその場で書ける） ---- */
 type RecipeNoteProps = {
@@ -110,7 +110,7 @@ const RecipeDetailPage = () => {
     <article>
       {/* 写真（iPhone は画面幅いっぱい）。戻る・お気に入りは写真の上に重ねる */}
       <div className="relative -mx-4 -mt-6 mb-5 md:mx-0 md:mt-0">
-        <ImagePlaceholder tags={recipe.tags} className="aspect-[4/3] w-full md:aspect-[16/7] md:rounded-3xl" emojiSize="text-8xl" />
+        <RecipePhoto imagePath={recipe.imagePath} tags={recipe.tags} size="large" className="aspect-[4/3] w-full md:aspect-[16/7] md:rounded-3xl" emojiSize="text-8xl" />
         <button
           type="button"
           onClick={() => navigate(-1)}
