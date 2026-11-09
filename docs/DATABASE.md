@@ -11,6 +11,7 @@
 | `20261017175704_init.sql` | 初期スキーマ（7テーブル・DB 関数3つ・権限・RLS） |
 | `20261018115231_revoke_unused_table_privileges.sql` | アプリで使わないテーブル権限（TRUNCATE など）を外す |
 | `20261024023439_add_requests_and_user_settings.sql` | 「食べたい！」の列と関数、ユーザーごとの設定（`user_settings`） |
+| `20261108233128_add_recipe_images.sql` | 写真のバケット（`recipe-images`）と権限、`save_recipe` に写真のパスを足す（#14） |
 
 ---
 
@@ -128,7 +129,7 @@ erDiagram
 | `is_favorite` | boolean | ✓ | `false` | お気に入り。夫婦で共通 |
 | `source_url` | text | | | 参考 URL。URL から取り込んだときは自動で入る |
 | `note` | text | | | ひとことメモ（作るときのコツや好み）。詳細画面で直接書き換える。`save_recipe` では触らない |
-| `image_path` | text | | | Supabase Storage 上の写真のパス。写真の機能を作るまでは使わない |
+| `image_path` | text | | | 写真のパス（Storage の `recipe-images` バケットの中の、詳細用 `{フォルダー}/large.jpg`）。null なら写真なし。一覧用の `small.jpg` はアプリで組み立てる（下の「Storage（写真）」） |
 | `created_by` | uuid | ✓ | `auth.uid()` | 作った人（`auth.users`） |
 | `created_at` | timestamptz | ✓ | `now()` | |
 | `updated_at` | timestamptz | ✓ | `now()` | 更新のたびにトリガーで自動更新 |
@@ -226,7 +227,7 @@ erDiagram
 
 | 関数 | 引数 → 戻り値 | 中身 |
 |---|---|---|
-| `save_recipe` | レシピの id（null なら追加）、料理名、調理時間、何人分、タグ、参考 URL、材料（jsonb の配列）、手順（text の配列） → 保存したレシピの id | レシピの追加・編集。材料と手順は全部消して入れ直す。配列の順番がそのまま表示順になる。削除済みのレシピを編集しようとしたらエラー |
+| `save_recipe` | レシピの id（null なら追加）、料理名、調理時間、何人分、タグ、参考 URL、材料（jsonb の配列）、手順（text の配列）、写真のパス（省略すると null） → 保存したレシピの id | レシピの追加・編集。材料と手順は全部消して入れ直す。配列の順番がそのまま表示順になる。写真のパスも、編集のときは渡した値で置き換える（写真を残すときは今のパスを渡す）。削除済みのレシピを編集しようとしたらエラー。写真そのもの（Storage）には触らない |
 | `mark_cooked` | リクエストの id → 追加した `cook_logs` の行 | 「作った！」。リクエストから外して、作った記録を足す。記録する日は、予定日が今日以前ならその予定日（押し忘れ対策）、未来か未定なら今日 |
 | `request_recipe` | レシピの id → 印を付けた（または追加した）`todo_items` の行 | 「🙋 食べたい！」。同じレシピが日付未定ですでにあれば、増やさずにその1件に印を付ける。なければ印付きで追加する |
 | `add_todo_ingredients_to_shopping` | なし → 追加した件数 | リクエストに入っているレシピの材料を買い物リストに足す。同じレシピが何日かに入っていても1回分。同じレシピの同じ材料が、まだ買っていない状態であれば重ねて入れない |
@@ -261,4 +262,24 @@ GRANT（テーブルや関数を使えるか）と RLS（どの行に触れる�
 | `shared_notes` | ログイン済みなら読める・書き換えられる（足す・消すはできない） |
 | `user_settings` | 自分の行だけ読める・作れる・変えられる（`user_id = auth.uid()`） |
 
-テストは [supabase/tests/](../supabase/tests/)（`04_privileges.sql` で権限、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [HANDOFF.md](../HANDOFF.md) の 16。
+---
+
+## Storage（写真）
+
+写真のファイルは DB ではなく Supabase Storage に置く。DB（`recipes.image_path`）にはパスだけを入れる。
+
+| 項目 | 内容 |
+|---|---|
+| バケット | `recipe-images`。**非公開**（ログインしていなければ見られない）。1ファイル 5MB まで、JPEG だけ |
+| ファイルの置き方 | 1枚の写真につき、詳細用（長い辺 1200px）と一覧用（400px）の2つを、同じフォルダーに置く：`{ランダムな32文字}/large.jpg`・`small.jpg`。縮小と JPEG への変換はアプリで行う |
+| 差し替え・削除 | 上書きしない。新しいフォルダーに上げて、保存できたら前の写真を消す |
+| 表示 | 期限付きの URL（1時間）をアプリが発行してもらい、`<img>` で出す |
+
+Storage のファイルは `storage.objects` テーブルの1行として管理され、RLS で守る。
+
+| 操作 | anon（未ログイン） | authenticated（ログイン済み） |
+|---|---|---|
+| 読む・上げる・消す（`recipe-images` の分だけ） | なし | できる |
+| 上書き（update） | なし | なし（差し替えは、新しく上げて古いものを消す） |
+
+テストは [supabase/tests/](../supabase/tests/)（`04_privileges.sql` で権限、`06_recipe_images.sql` で写真の権限と `save_recipe` の写真のパス、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [HANDOFF.md](../HANDOFF.md) の 16。
