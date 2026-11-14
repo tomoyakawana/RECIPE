@@ -278,14 +278,18 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={saveRecipe.isPending}
-        // PC では横いっぱいだと長すぎるので、幅を決めて中央に置く
-        className="mt-6 min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:opacity-50 lg:mx-auto lg:mt-8 lg:block lg:max-w-md"
-      >
-        {saveRecipe.isPending ? '保存中…' : '保存する'}
-      </button>
+      {/* 保存ボタンは画面の下に浮かせる（AI 取り込みの後、一番下までスクロールしなくても保存できるように）
+          iPhone：下のタブバーの上（ホームバーの分も足す）。タブレット・PC：メニューが上か左なので、画面の下の近く */}
+      <div className="sticky bottom-[calc(6rem+env(safe-area-inset-bottom))] mt-6 md:bottom-4 lg:mt-8">
+        <button
+          type="submit"
+          disabled={saveRecipe.isPending}
+          // PC では横いっぱいだと長すぎるので、幅を決めて中央に置く
+          className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:opacity-50 lg:mx-auto lg:block lg:max-w-md"
+        >
+          {saveRecipe.isPending ? '保存中…' : '保存する'}
+        </button>
+      </div>
     </form>
   );
 };
