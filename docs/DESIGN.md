@@ -24,7 +24,7 @@
 | 作ったご飯 | `/history` | `src/pages/History/` | 「作った！」の記録の一覧 |
 | 設定 | `/settings` | `src/pages/Settings/` | ログイン中のメールアドレス、シークレットモード、バージョン、ログアウト |
 
-ルートの定義は `src/App.tsx`。ログイン以外の画面は、下のタブ（`src/components/layout/MainLayout/`）の中に表示する。
+ルートの定義は `src/App.tsx`。ログイン以外の画面は、共通の枠（`src/components/layout/MainLayout/`）の中に表示する。枠のナビは、iPhone では下のタブ、タブレットの幅（768px〜）では上のメニュー、PC の幅（1024px〜）では左のサイドバー。
 
 ### 遷移の図
 
@@ -55,7 +55,7 @@ flowchart TD
   Settings -->|ログアウト| Login
 ```
 
-タブどうしは、下のタブでいつでも行き来できる（図では省略）。
+タブどうしは、下のタブ（PC ではサイドバー）でいつでも行き来できる（図では省略）。
 
 ### 遷移のルール
 

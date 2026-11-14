@@ -156,127 +156,133 @@ const RecipeForm = ({ recipe }: { recipe?: Recipe }) => {
       {/* AI で取り込む（機能5）。結果はフォームに入れるだけで、保存はしない */}
       <AiImport onDraft={applyDraft} existingTags={allTags} />
 
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-bold">写真</label>
-          {hasImage && (
-            <div className="relative mb-2">
-              {preview ? (
-                <img src={preview} alt="" className="aspect-4/3 w-full rounded-xl object-cover" />
-              ) : (
-                <RecipePhoto imagePath={imagePath} size="large" className="aspect-4/3 w-full rounded-xl" />
-              )}
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                disabled={saveRecipe.isPending}
-                aria-label="写真を外す"
-                className="absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-          {/* AI 取り込みと同じく、label の中に隠した input を置く（label を押すと写真の選択が開く） */}
-          <label className="inline-flex min-h-11 cursor-pointer items-center text-sm font-bold text-brand">
-            📷 {hasImage ? '写真を変える' : '写真を付ける'}
-            <input type="file" accept="image/*" className="hidden" onChange={handlePickImage} disabled={saveRecipe.isPending} />
-          </label>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-bold">料理名 <span className="text-red-500">*</span></label>
-          <input value={title} onChange={e => setTitle(e.target.value)} required maxLength={100} className={INPUT_CLASS} placeholder="例：豚の生姜焼き" />
-        </div>
-
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-bold">調理時間（分）</label>
-            <input type="number" inputMode="numeric" min={1} value={cookMinutes} onChange={e => setCookMinutes(e.target.value)} className={INPUT_CLASS} />
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-bold">何人分</label>
-            <input type="number" inputMode="numeric" min={1} value={servings} onChange={e => setServings(e.target.value)} className={INPUT_CLASS} />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-bold">タグ</label>
-          <TagSelector selected={tags} options={allTags} onChange={setTags} />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-bold">材料</label>
-          <div className="space-y-2">
-            {ingredients.map((ing, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} maxLength={100} className={`${INPUT_CLASS} min-w-0 flex-[2]`} placeholder="材料" />
-                <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-1`} placeholder="分量" />
+      {/* PC（lg）では2列：左に「どんな料理か」、右に「材料と作り方」。iPhone では今までどおり上から1列 */}
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8 lg:space-y-0">
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-bold">写真</label>
+            {hasImage && (
+              <div className="relative mb-2">
+                {preview ? (
+                  <img src={preview} alt="" className="aspect-4/3 w-full rounded-xl object-cover" />
+                ) : (
+                  <RecipePhoto imagePath={imagePath} size="large" className="aspect-4/3 w-full rounded-xl" />
+                )}
                 <button
                   type="button"
-                  onClick={() => removeIngredient(i)}
-                  aria-label={`材料${i + 1}を消す`}
-                  className="flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
+                  onClick={handleRemoveImage}
+                  disabled={saveRecipe.isPending}
+                  aria-label="写真を外す"
+                  className="absolute top-2 right-2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
                 >
                   ✕
                 </button>
               </div>
-            ))}
+            )}
+            {/* AI 取り込みと同じく、label の中に隠した input を置く（label を押すと写真の選択が開く） */}
+            <label className="inline-flex min-h-11 cursor-pointer items-center text-sm font-bold text-brand">
+              📷 {hasImage ? '写真を変える' : '写真を付ける'}
+              <input type="file" accept="image/*" className="hidden" onChange={handlePickImage} disabled={saveRecipe.isPending} />
+            </label>
           </div>
-          <button
-            type="button"
-            onClick={() => setIngredients(prev => [...prev, EMPTY_INGREDIENT])}
-            className="mt-2 min-h-11 text-sm font-bold text-brand"
-          >
-            ＋ 材料を追加
-          </button>
+
+          <div>
+            <label className="mb-1 block text-sm font-bold">料理名 <span className="text-red-500">*</span></label>
+            <input value={title} onChange={e => setTitle(e.target.value)} required maxLength={100} className={INPUT_CLASS} placeholder="例：豚の生姜焼き" />
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="mb-1 block text-sm font-bold">調理時間（分）</label>
+              <input type="number" inputMode="numeric" min={1} value={cookMinutes} onChange={e => setCookMinutes(e.target.value)} className={INPUT_CLASS} />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-sm font-bold">何人分</label>
+              <input type="number" inputMode="numeric" min={1} value={servings} onChange={e => setServings(e.target.value)} className={INPUT_CLASS} />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-bold">タグ</label>
+            <TagSelector selected={tags} options={allTags} onChange={setTags} />
+          </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-bold">作り方</label>
-          <ol className="space-y-2">
-            {steps.map((st, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="mt-3 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                  {i + 1}
-                </span>
-                <textarea
-                  value={st}
-                  onChange={e => updateStep(i, e.target.value)}
-                  rows={2}
-                  placeholder={i === 0 ? '例：玉ねぎを薄切りにする' : ''}
-                  className={`${INPUT_CLASS} min-w-0 flex-1 resize-y py-2`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeStep(i)}
-                  aria-label={`手順${i + 1}を消す`}
-                  className="mt-1.5 flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ol>
-          <button
-            type="button"
-            onClick={() => setSteps(prev => [...prev, ''])}
-            className="mt-2 min-h-11 text-sm font-bold text-brand"
-          >
-            ＋ 手順を追加
-          </button>
-        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-bold">材料</label>
+            <div className="space-y-2">
+              {ingredients.map((ing, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} maxLength={100} className={`${INPUT_CLASS} min-w-0 flex-[2]`} placeholder="材料" />
+                  <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className={`${INPUT_CLASS} min-w-0 flex-1`} placeholder="分量" />
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(i)}
+                    aria-label={`材料${i + 1}を消す`}
+                    className="flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIngredients(prev => [...prev, EMPTY_INGREDIENT])}
+              className="mt-2 min-h-11 text-sm font-bold text-brand"
+            >
+              ＋ 材料を追加
+            </button>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-bold">参考URL</label>
-          <input type="url" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} className={INPUT_CLASS} placeholder="https://" />
+          <div>
+            <label className="mb-1 block text-sm font-bold">作り方</label>
+            <ol className="space-y-2">
+              {steps.map((st, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-3 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <textarea
+                    value={st}
+                    onChange={e => updateStep(i, e.target.value)}
+                    rows={2}
+                    placeholder={i === 0 ? '例：玉ねぎを薄切りにする' : ''}
+                    className={`${INPUT_CLASS} min-w-0 flex-1 resize-y py-2`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeStep(i)}
+                    aria-label={`手順${i + 1}を消す`}
+                    className="mt-1.5 flex size-10 shrink-0 items-center justify-center text-sm text-stone-400"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <button
+              type="button"
+              onClick={() => setSteps(prev => [...prev, ''])}
+              className="mt-2 min-h-11 text-sm font-bold text-brand"
+            >
+              ＋ 手順を追加
+            </button>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-bold">参考URL</label>
+            <input type="url" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} className={INPUT_CLASS} placeholder="https://" />
+          </div>
         </div>
       </div>
 
       <button
         type="submit"
         disabled={saveRecipe.isPending}
-        className="mt-6 min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:opacity-50"
+        // PC では横いっぱいだと長すぎるので、幅を決めて中央に置く
+        className="mt-6 min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:opacity-50 lg:mx-auto lg:mt-8 lg:block lg:max-w-md"
       >
         {saveRecipe.isPending ? '保存中…' : '保存する'}
       </button>
