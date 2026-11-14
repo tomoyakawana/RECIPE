@@ -29,9 +29,11 @@ const ALLOWED_HOSTS = [
   'delishkitchen.tv', 'www.delishkitchen.tv',   // DELISH KITCHEN
   'cookpad.com', 'www.cookpad.com',             // クックパッド
   'www.kurashiru.com', 'kurashiru.com',         // クラシル
+  'oceans-nadia.com', 'www.oceans-nadia.com',   // Nadia
+  'www.kikkoman.co.jp',                         // キッコーマン（www なしはつながらないので入れない）
 ];
 const FETCH_TIMEOUT_MS = 15_000;                 // ページを待つ時間
-const MAX_PAGE_BYTES   = 3_000_000;              // ページの大きさの上限（今の3サイトは 150〜340KB）
+const MAX_PAGE_BYTES   = 3_000_000;              // ページの大きさの上限（今の5サイトは 75〜340KB）
 const MAX_REDIRECTS    = 3;                      // 転送（www の付け外しなど）を追う回数
 
 // ────────────────────────────────────────────────
@@ -227,7 +229,9 @@ const recipeTextFromPage = (html: string): string => {
   let recipe: Record<string, unknown> | null = null;
   for (const [, json] of blocks) {
     try {
-      recipe = findRecipe(JSON.parse(json));
+      // 改行などの制御文字を、文字列の中にそのまま入れてくるサイトがある（キッコーマン）。JSON としては壊れているので、空白に置き換えてから読む
+      // oxlint-disable-next-line no-control-regex
+      recipe = findRecipe(JSON.parse(json.replace(/[\u0000-\u001f]/g, ' ')));
     } catch {
       continue;   // 壊れた JSON-LD は飛ばす
     }
