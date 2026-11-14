@@ -98,7 +98,7 @@ const AiImport = ({ onDraft, existingTags }: Props) => {
             // iOS の自動ズームを避けるため text-base（16px）
             className="w-full rounded-xl border border-stone-200 bg-cream/50 p-3 text-base outline-none focus:ring-2 focus:ring-brand/40"
           />
-          <p className="mt-1.5 text-xs text-stone-400">対応しているサイト：DELISH KITCHEN・クックパッド・クラシル</p>
+          <p className="mt-1.5 text-xs text-stone-400">対応しているサイト：DELISH KITCHEN・クックパッド・クラシル・Nadia・キッコーマン</p>
           <button
             type="button"
             onClick={() => run({ url: url.trim() })}
