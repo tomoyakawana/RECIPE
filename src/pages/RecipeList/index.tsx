@@ -97,8 +97,8 @@ const RecipeListPage = () => {
 
       {!isPending && !error && filtered.length === 0 && <p className="py-10 text-center text-stone-500">該当するレシピがありません</p>}
 
-      {/* 写真が主役のカード。iPhone は2列、PC は3列 */}
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+      {/* 写真が主役のカード。iPhone は2列、タブレットは3列、PC は4列（広い画面は5列） */}
+      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
         {filtered.map(r => (
           <li key={r.id} className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-stone-900/5">
             <div className="relative">
