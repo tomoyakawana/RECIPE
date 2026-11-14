@@ -207,13 +207,15 @@ const RecipeDetailPage = () => {
         </section>
       </div>
 
-      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる） */}
-      <div className="sticky bottom-24 md:static">
+      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる）
+          後ろに下から cream のグラデーションを敷き、スクロール中の文字がボタンに重ならないようにする
+          帯はタップを素通し（pointer-events-none）にして、下の文字やリンクを押せるようにする。ボタンだけ押せるように戻す */}
+      <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-linear-to-t from-cream from-60% to-transparent pt-6 pb-4 md:static md:bg-none md:p-0">
         <button
           type="button"
           disabled={done || addToTodo.isPending || requestRecipe.isPending}
           onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate({ recipeId: recipe.id, plannedOn: undefined }))}
-          className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
+          className="pointer-events-auto min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode
             ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')
