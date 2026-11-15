@@ -131,7 +131,10 @@ const RecipeDetailPage = () => {
         </button>
       </div>
 
-      <div className="flex items-start gap-2">
+      {/* レシピ名と編集は、スクロールしても画面の上に貼り付ける（下の方を見ていても、何のレシピか分かり、すぐ直せるように）
+          背景を付けて、下を流れる文字が透けないようにする。横は本文の余白の分だけ広げて、画面の端まで塗る
+          z-10：写真の上の戻る・お気に入りボタン（absolute）より前に出す */}
+      <div className="sticky top-0 z-10 -mx-4 flex items-start gap-2 bg-cream/90 px-4 py-2 backdrop-blur md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
         <h1 className="flex-1 text-2xl font-extrabold tracking-tight">{recipe.title}</h1>
         <Link
           to={`/recipes/${recipe.id}/edit`}
