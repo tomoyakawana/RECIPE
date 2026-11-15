@@ -131,7 +131,10 @@ const RecipeDetailPage = () => {
         </button>
       </div>
 
-      <div className="flex items-start gap-2">
+      {/* レシピ名と編集は、スクロールしても画面の上に貼り付ける（下の方を見ていても、何のレシピか分かり、すぐ直せるように）
+          背景を付けて、下を流れる文字が透けないようにする。横は本文の余白の分だけ広げて、画面の端まで塗る
+          z-10：写真の上の戻る・お気に入りボタン（absolute）より前に出す */}
+      <div className="sticky top-0 z-10 -mx-4 flex items-start gap-2 bg-cream/90 px-4 py-2 backdrop-blur md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
         <h1 className="flex-1 text-2xl font-extrabold tracking-tight">{recipe.title}</h1>
         <Link
           to={`/recipes/${recipe.id}/edit`}
@@ -207,13 +210,15 @@ const RecipeDetailPage = () => {
         </section>
       </div>
 
-      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる） */}
-      <div className="sticky bottom-24 md:static">
+      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる）
+          後ろに下から cream のグラデーションを敷き、スクロール中の文字がボタンに重ならないようにする
+          帯はタップを素通し（pointer-events-none）にして、下の文字やリンクを押せるようにする。ボタンだけ押せるように戻す */}
+      <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-linear-to-t from-cream from-60% to-transparent pt-6 pb-4 md:static md:bg-none md:p-0">
         <button
           type="button"
           disabled={done || addToTodo.isPending || requestRecipe.isPending}
           onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate({ recipeId: recipe.id, plannedOn: undefined }))}
-          className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
+          className="pointer-events-auto min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode
             ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')
