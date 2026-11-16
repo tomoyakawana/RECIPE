@@ -645,6 +645,13 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 - 確認：main にマージ後、本番の画面で対応サイトの表示。設定画面のバージョンは最初の2つの数字だけなので「1.2」のまま
 - DB の変更はなし
 
+### 2026-11-16：PR #72（#71：Gemini のモデル名を環境変数で切り替え）— Edge Function だけ先に本番へ
+- **main にはまだ載せていない**（v1.3 にまとめる）。Edge Function は main と関係なく `functions deploy` で本番に効くので、本番の parse-recipe は v1.3 まで **develop の版**で動く
+- 手順：#72 を develop にマージ → CI ✅ を確認 → develop の最新（`c8dbfb1`）で `npx supabase functions deploy parse-recipe --use-api`（川名さん）→ `functions list` で **版 7**（00:38 UTC）
+- 確認：本番で AI 取り込みができること（下書きまで、保存はしない）（川名さん）
+- 本番の secrets には `PARSE_RECIPE_MODEL` を**入れていない**。既定のモデル（`gemini-3.5-flash-lite`）で、動きは前と同じ
+- 画面・DB の変更はなし
+
 ### 受け入れたリスク
 | 項目 | 内容 | 判断 |
 |---|---|---|
