@@ -15,8 +15,13 @@ import { z } from 'zod';
 // ────────────────────────────────────────────────
 // 定数
 // ────────────────────────────────────────────────
-const MODEL           = 'gemini-3.5-flash-lite';   // 無料枠の対象（2026-10-21 公式の料金ページで確認）
-const GEMINI_URL      = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// 使うモデル。Supabase の Secrets の PARSE_RECIPE_MODEL に文字列で入れると、コードを直さずに切り替えられる（#71）
+// 入れていない（空も含む）ときは、既定のモデルを使う。既定のモデルは無料枠の対象（2026-10-21 公式の料金ページで確認）
+// 間違ったモデル名を入れると Gemini がエラーを返し、「読み取りに失敗しました」になる（ログにモデル名が出る）
+const DEFAULT_MODEL   = 'gemini-3.5-flash-lite';
+const MODEL           = Deno.env.get('PARSE_RECIPE_MODEL')?.trim() || DEFAULT_MODEL;
+// encodeURIComponent：モデル名に / などが入っていても、URL の別の場所を指さないようにする
+const GEMINI_URL      = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
 // Gemini を待つ時間。Edge Function は無料プランでも1回150秒まで動ける（2026-10-22 公式で確認）ので、余裕を残して90秒
 const TIMEOUT_MS      = 90_000;
 const MAX_TEXT_CHARS  = 8_000;                     // 長すぎる文章は受け付けない（無料枠の節約）
@@ -294,7 +299,7 @@ const callGemini = async (input: GeminiInput): Promise<RecipeDraft> => {
 
   if (res.status === 429) throw new UserFacingError('AI の利用回数の上限に達しました。しばらく時間をおいてお試しください', 429);
   if (!res.ok) {
-    console.error('[parse-recipe] Gemini error', res.status, (await res.text()).slice(0, 500));
+    console.error('[parse-recipe] Gemini error', `model=${MODEL}`, res.status, (await res.text()).slice(0, 500));
     throw new UserFacingError('AI での読み取りに失敗しました。もう一度お試しください', 502);
   }
 
@@ -302,7 +307,7 @@ const callGemini = async (input: GeminiInput): Promise<RecipeDraft> => {
   // かかった時間と、使ったトークン数（考える処理の分も含む）を残して、遅さの原因を調べられるようにする
   const usage = body?.usageMetadata ?? {};
   console.log(
-    `[parse-recipe] ok ${kind} ms=${Date.now() - started} ` +
+    `[parse-recipe] ok model=${MODEL} ${kind} ms=${Date.now() - started} ` +
     `prompt=${usage.promptTokenCount} output=${usage.candidatesTokenCount} thoughts=${usage.thoughtsTokenCount ?? 0}`,
   );
   const raw  = body?.candidates?.[0]?.content?.parts?.[0]?.text;
