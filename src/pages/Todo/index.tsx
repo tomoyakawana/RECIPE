@@ -5,6 +5,7 @@ import DatePill from '../../components/common/DatePill';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import MonthCalendar from '../../components/common/MonthCalendar';
+import MenuSuggestSheet from '../../components/common/MenuSuggestSheet';
 import { useRecipes } from '../../hooks/useRecipes';
 import { useSecretMode } from '../../hooks/useSettings';
 import { useMarkCooked, useRemoveTodo, useSetPlannedOn, useTodoItems } from '../../hooks/useTodo';
@@ -78,6 +79,7 @@ const TodoPage = () => {
   const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [menuOpen, setMenuOpen]     = useState(false);
   const [notice, setNotice]     = useState('');
 
   // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
@@ -176,6 +178,13 @@ const TodoPage = () => {
         </div>
 
         <div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className="mb-5 min-h-11 w-full rounded-full bg-brand px-4 text-sm font-bold text-white shadow-md shadow-brand/30"
+          >
+            🤖 明日からの献立を提案してもらう
+          </button>
           {notice && <p className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{notice}</p>}
 
           {rows.length === 0 && (
@@ -224,6 +233,7 @@ const TodoPage = () => {
       </div>
       {/* シートは画面のいちばん外側に置く。PC の幅ではカレンダーの列が sticky になり、その中に置くと、右の列のカードより前に出られないため */}
       {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
+      {menuOpen && <MenuSuggestSheet onClose={() => setMenuOpen(false)} recipes={recipes} />}
     </>
   );
 };
