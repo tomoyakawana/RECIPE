@@ -3,8 +3,8 @@
  * DB も Deno も使わない、ただの計算だけにしておく。入力が同じなら結果も同じなので、テストを書きやすい（#37 で Vitest の題材にする）
  */
 
-const MAX_CANDIDATES = 30;   // AI に渡す候補の上限（画面には出ない）
-const RECENT_DAYS    = 5;    // 最近何日以内に作ったものを外すか
+const MAX_CANDIDATES     = 30;   // AI に渡す候補の上限（画面には出ない）
+export const RECENT_DAYS = 5;    // 最近何日以内に作ったものを外すか（index.ts で、読む作った記録の範囲にも使う）
 
 // 候補のレシピ（AI に渡す項目だけ。手順の文章は渡さない）
 export type CandidateRecipe = {
