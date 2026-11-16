@@ -671,6 +671,15 @@ Edge Function「parse-recipe」（supabase/functions/parse-recipe/）
 | 項目 | 内容 | 理由 |
 |---|---|---|
 | モデル | `gemini-3.5-flash-lite` | 無料枠の対象（2026-10-21 公式の料金ページで確認）。SSAM と同じモデル |
+| モデルの切り替え（#71、2026-11-16） | Secrets の `PARSE_RECIPE_MODEL` にモデル名を入れると、そのモデルを使う。入れていない・空のときは、コードの既定（`DEFAULT_MODEL`）を使う。ログの `model=` で、どれが使われたか分かる | 別のモデルに変えることもありうるので、コードを直さずに切り替えられるようにする（川名さん）。献立提案（#11）も同じ形（`SUGGEST_MENU_MODEL`）にそろえる。変数は関数ごとに分ける（1つにすると、片方だけ変えられない） |
+
+**モデルの切り替え方（#71）**
+- 本番：`npx supabase secrets set PARSE_RECIPE_MODEL=モデル名`。**再デプロイは要らない**（公式「Your functions read a new secret immediately, so you don't need to redeploy.」2026-11-16 確認）。既定に戻すときは `npx supabase secrets unset PARSE_RECIPE_MODEL`
+- ローカル：`supabase/functions/.env` に `PARSE_RECIPE_MODEL=モデル名` を足し、`npx supabase stop` → `npx supabase start`（`.env` は start のときに読まれる）
+- 間違ったモデル名を入れると、Gemini が 404 を返し、アプリには「AI での読み取りに失敗しました」と出る。ログに `Gemini error model=…` が出るので、そこで気づける
+- 無料枠の対象かどうかはモデルごとに違う。変える前に、公式の料金ページで確かめる
+- ローカルで確認したこと（2026-11-16）：設定なし → 既定のモデルで取り込めた／間違った名前 → 502 と上のメッセージ、ログに model=…／空の値 → 既定のモデル
+- **本番の parse-recipe は v1.3 まで develop の版で動く**（#71 は main に先に載せず、v1.3 にまとめる。設定しなければ動きは前と同じ）
 | テキストから取り込む | iPhone のテキスト認識表示（Live Text）でコピーした文字や、レシピサイトの文章を貼り付ける | 川名さんの発案。写真より送るデータが小さく、無料枠の節約になり、写真そのものを外に出さずに済む |
 | 写真から取り込む | アプリ側で長い辺 1600px・JPEG に縮小してから送る（`utils/image.ts`） | iPhone の写真は大きいため、送る量と時間を減らす |
 | 答えの形 | Gemini に JSON の形（`responseSchema`）を指定。作り方は配列で1要素＝1ステップ、1ステップの中では改行しない | フォームの入力欄（1ステップ1欄）にそのまま入れられる |
