@@ -29,7 +29,7 @@ const MAX_IMAGE_CHARS = 4_000_000;                 // base64 で約 3MB まで�
 const IMAGE_TYPES     = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 // URL から取り込むときに、取りに行ってよいサイト（ここにないサイトには行かない。SSRF 対策）
-// 増やすときは、そのサイトのページに JSON-LD の Recipe があるかを確かめてから1行足す（HANDOFF 18 章）
+// 増やすときは、そのサイトのページに JSON-LD の Recipe があるかを確かめてから1行足す（docs/decisions/ai-import.md）
 const ALLOWED_HOSTS = [
   'delishkitchen.tv', 'www.delishkitchen.tv',   // DELISH KITCHEN
   'cookpad.com', 'www.cookpad.com',             // クックパッド

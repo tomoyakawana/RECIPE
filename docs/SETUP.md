@@ -16,7 +16,7 @@ PWA（Service Worker）は `npm run dev` では動かない。確認するとき
 
 ## ローカルの DB（Supabase）
 
-`npm run dev` は**ローカルの Supabase**（Docker）につなぐ。本番の DB には触らない（理由は [HANDOFF.md](../HANDOFF.md) の 24）。
+`npm run dev` は**ローカルの Supabase**（Docker）につなぐ。本番の DB には触らない（理由は [decisions/dev-process.md](decisions/dev-process.md)「ローカルの開発環境」）。
 `npm run build`（本番）は今までどおり本番の DB を使う。
 
 ```bash
@@ -80,6 +80,6 @@ npx supabase start -x logflare,vector  # 止まっていたら起動（Docker De
   - Mac の名前（Bonjour）で開くので、IP アドレスが変わっても使える。名前は `scutil --get LocalHostName` で確認できる
   - 開けないときは、起動時に表示される `Network:` の URL（IP アドレス）を使う
 - develop / main に push すると Cloudflare Pages が自動でデプロイする
-- ブランチ運用は Issue ごとのブランチ → develop → main（詳細は [CLAUDE.md](../CLAUDE.md)、リリースの手順は [HANDOFF.md](../HANDOFF.md) の 23）
+- ブランチ運用は Issue ごとのブランチ → develop → main（詳細は [CLAUDE.md](../CLAUDE.md)、リリースの手順は [decisions/dev-process.md](decisions/dev-process.md)「バージョン」）
 
-設計方針や経緯は [HANDOFF.md](../HANDOFF.md)、作業ルールは [CLAUDE.md](../CLAUDE.md) を参照。
+設計方針や経緯は [HANDOFF.md](../HANDOFF.md)（目次から [decisions/](decisions/) へ）、作業ルールは [CLAUDE.md](../CLAUDE.md) を参照。
