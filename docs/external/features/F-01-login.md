@@ -29,4 +29,4 @@
 | メールアドレスの確認が済んでいない | メールアドレスの確認が済んでいません |
 | それ以外 | ログインできませんでした。時間をおいてもう一度お試しください |
 
-**関わるもの**：Supabase の認証、`pages/Login/`、`contexts/AuthProvider.tsx`、`components/common/RequireAuth.tsx`（理由は HANDOFF 14「認証の設定」、19「ログインのセッション」）
+**関わるもの**：Supabase の認証、`pages/Login/`、`contexts/AuthProvider.tsx`、`components/common/RequireAuth.tsx`（理由は [decisions/database.md](../../decisions/database.md)「認証の設定」、[decisions/auth.md](../../decisions/auth.md)）

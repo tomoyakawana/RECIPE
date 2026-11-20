@@ -25,4 +25,4 @@
 - ✕ で1品消す。「買ったもの（◯品）を消す」で、チェックしたものをまとめて消す
 - リクエストの材料から足したものは、どの料理の材料かを出す（シークレットモードのときは出さない）
 
-**関わるもの**：`shopping_items`、DB 関数 `add_todo_ingredients_to_shopping`、`pages/Memo/`、`api/shopping.ts`（理由は HANDOFF 11「メモ：買い物リストと共有メモ」）
+**関わるもの**：`shopping_items`、DB 関数 `add_todo_ingredients_to_shopping`、`pages/Memo/`、`api/shopping.ts`（理由は [decisions/ui.md](../../decisions/ui.md)「メモ：買い物リストと共有メモ」）

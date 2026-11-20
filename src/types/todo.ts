@@ -1,4 +1,4 @@
-/** 「リクエスト」リストの 1件分（DB の todo_items。名前は「今週作る」だった頃のまま：HANDOFF 22 章） */
+/** 「リクエスト」リストの 1件分（DB の todo_items。名前は「今週作る」だった頃のまま：docs/decisions/database.md） */
 export type TodoItem = {
   id         : string;
   recipeId   : string;

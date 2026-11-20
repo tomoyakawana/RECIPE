@@ -2,7 +2,7 @@
 
 「なに食べたい？」の DB（Supabase の PostgreSQL）の**今の定義**をまとめたもの。正は [supabase/migrations/](../../supabase/migrations/) のマイグレーションで、ここはそれを読みやすく書き起こしたもの。
 
-「なぜそうしたか」は [HANDOFF.md](../../HANDOFF.md) の 12（命名規則）・13（スキーマの判断・権限）・22（DB とのつなぎ方）を参照。
+「なぜそうしたか」は [decisions/database.md](../decisions/database.md)（命名規則・スキーマの判断・権限・DB とのつなぎ方）を参照。
 
 **マイグレーションを足したら、ここも一緒に直す。**
 
@@ -282,4 +282,4 @@ Storage のファイルは `storage.objects` テーブルの1行として管理�
 | 読む・上げる・消す（`recipe-images` の分だけ） | なし | できる |
 | 上書き（update） | なし | なし（差し替えは、新しく上げて古いものを消す） |
 
-テストは [supabase/tests/](../../supabase/tests/)（`04_privileges.sql` で権限、`06_recipe_images.sql` で写真の権限と `save_recipe` の写真のパス、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [HANDOFF.md](../../HANDOFF.md) の 16。
+テストは [supabase/tests/](../../supabase/tests/)（`04_privileges.sql` で権限、`06_recipe_images.sql` で写真の権限と `save_recipe` の写真のパス、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [decisions/security-checklist.md](../decisions/security-checklist.md)。

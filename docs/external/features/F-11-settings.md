@@ -12,4 +12,4 @@
 - アプリ名とバージョン（`package.json` のバージョンの最初の2つ。例：1.1）
 - ログアウト（F-01）
 
-**関わるもの**：`pages/Settings/`（バージョンの決め方は HANDOFF 23）
+**関わるもの**：`pages/Settings/`（バージョンの決め方は [decisions/dev-process.md](../../decisions/dev-process.md)）

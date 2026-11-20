@@ -48,4 +48,4 @@
 *保存中*
 - 「作った！」か ✕ の保存中は、どのカードのボタンも押せない
 
-**関わるもの**：`todo_items`、DB 関数 `mark_cooked`・`request_recipe`、`pages/Todo/`、`components/common/MonthCalendar.tsx`・`AddPlanSheet.tsx`・`DatePill.tsx`・`FloatingActions.tsx`、`api/todo.ts`（理由は HANDOFF 11「今週作る：予定日とカレンダー」、15「予定日の表示をユーザーごとに分ける」）
+**関わるもの**：`todo_items`、DB 関数 `mark_cooked`・`request_recipe`、`pages/Todo/`、`components/common/MonthCalendar.tsx`・`AddPlanSheet.tsx`・`DatePill.tsx`・`FloatingActions.tsx`、`api/todo.ts`（理由は [decisions/ui.md](../../decisions/ui.md)「今週作る：予定日とカレンダー」、[decisions/secret-mode.md](../../decisions/secret-mode.md)）

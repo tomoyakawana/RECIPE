@@ -40,4 +40,4 @@
 | AI の返事が遅すぎる | AI の返事に時間がかかりすぎました。少し時間をおいてもう一度お試しください |
 | レシピとして読めない | レシピとして読み取れませんでした。料理名や材料が写っているか確認してください |
 
-**関わるもの**：Edge Function `parse-recipe`（Gemini API を呼ぶのはここだけ）、`components/common/AiImport.tsx`、`utils/parseRecipe.ts`、`utils/image.ts`（理由・構成は HANDOFF 18 全体、特に「URL から取り込む」）
+**関わるもの**：Edge Function `parse-recipe`（Gemini API を呼ぶのはここだけ）、`components/common/AiImport.tsx`、`utils/parseRecipe.ts`、`utils/image.ts`（理由・構成は [decisions/ai-import.md](../../decisions/ai-import.md) 全体、特に「URL から取り込む」）

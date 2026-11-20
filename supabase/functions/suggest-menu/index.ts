@@ -17,7 +17,7 @@ import { addDays, planMenu, RECENT_DAYS, type CandidateRecipe, type Plan } from 
 // ────────────────────────────────────────────────
 // 定数
 // ────────────────────────────────────────────────
-const DAYS             = 5;   // 明日から何日分を考えるか（HANDOFF 15）
+const DAYS             = 5;   // 明日から何日分を考えるか（docs/decisions/menu-suggestion.md）
 const MAIN_INGREDIENTS = 3;   // AI に渡す「主な材料」の数（材料の先頭から）
 
 // 使うモデル。Secrets の SUGGEST_MENU_MODEL に文字列で入れると、コードを直さずに切り替えられる（parse-recipe と同じ形。#71）
@@ -27,7 +27,7 @@ const MODEL         = Deno.env.get('SUGGEST_MENU_MODEL')?.trim() || DEFAULT_MODE
 const GEMINI_URL    = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`;
 const TIMEOUT_MS    = 60_000;   // Gemini を待つ時間。渡すのは短い文章だけなので、parse-recipe（90秒）より短くする
 
-// AI への指示。この機能の出来は、ほとんどここ次第。使いながら直していく（HANDOFF 15）
+// AI への指示。この機能の出来は、ほとんどここ次第。使いながら直していく（docs/decisions/menu-suggestion.md）
 const PROMPT = `あなたは、夫婦2人の家庭の献立係です。これから数日分の夕食の主菜を、指定された品数だけ提案して JSON で返してください。
 ルール：
 - 基本は「候補」の中から選ぶ。候補から選ぶときは kind を existing にし、no に候補の番号を入れる
@@ -50,7 +50,7 @@ type MenuPick =
   | { kind: 'existing'; recipeId: string; reason: string }
   | { kind: 'new';      dishName: string; reason: string };
 
-// Gemini に返させる答えの形。「どちらか一方」は書けるか分からないので、平らな形にする（HANDOFF 15）
+// Gemini に返させる答えの形。「どちらか一方」は書けるか分からないので、平らな形にする（docs/decisions/menu-suggestion.md）
 const GEMINI_RESPONSE_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -153,7 +153,7 @@ const callGemini = async (text: string): Promise<GeminiAnswer> => {
   }
 
   const body = await res.json();
-  // かかった時間と、使ったトークン数を残す（見積もりが合っているかを確かめる。HANDOFF 15）
+  // かかった時間と、使ったトークン数を残す（見積もりが合っているかを確かめる。docs/decisions/menu-suggestion.md）
   const usage = body?.usageMetadata ?? {};
   console.log(
     `[suggest-menu] ok model=${MODEL} ms=${Date.now() - started} ` +

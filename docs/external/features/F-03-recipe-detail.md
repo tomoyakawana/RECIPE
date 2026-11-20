@@ -17,4 +17,4 @@
 - iPhone の幅では、画面の下に、リクエストに入れるボタンを浮かせて出す（F-06）。後ろに背景のグラデーションを敷き、スクロール中の文字と重ならないようにする（#24）
 - 料理名と「編集」は、下にスクロールしても画面の上に貼り付いて見えたままにする（#24）
 
-**関わるもの**：`recipes`、`cook_logs`（作った回数）、`pages/RecipeDetail/`、`api/recipes.ts`（理由は HANDOFF 11「レシピのひとことメモ」、13「主な判断」）
+**関わるもの**：`recipes`、`cook_logs`（作った回数）、`pages/RecipeDetail/`、`api/recipes.ts`（理由は [decisions/ui.md](../../decisions/ui.md)「レシピのひとことメモ」、[decisions/database.md](../../decisions/database.md)「主な判断」）

@@ -1,6 +1,6 @@
 # 設計書
 
-「なに食べたい？」の**今の作り**をまとめたもの。「なぜそうしたか・いつ決めたか」は [HANDOFF.md](../../HANDOFF.md) に書き、ここからリンクする（同じ説明を二重に書かない）。
+「なに食べたい？」の**今の作り**をまとめたもの。「なぜそうしたか・いつ決めたか」は [decisions/](../decisions/)（目次は [HANDOFF.md](../../HANDOFF.md)）に書き、ここからリンクする（同じ説明を二重に書かない）。
 
 画面・DB・処理を変えたら、ここも一緒に直す。
 
@@ -62,9 +62,9 @@ flowchart TD
 | ルール | 内容 | 場所 |
 |---|---|---|
 | ログインしていないとき | ログイン以外の画面を開くと `/login` へ移す。ログインしたら、開こうとしていた画面へ戻す | `src/components/common/RequireAuth.tsx`、`src/pages/Login/` |
-| 保存した後の移り先 | 追加したら一覧、編集したら詳細へ。どちらも履歴を置き換える（「戻る」でフォームに戻らない） | `src/pages/RecipeForm/`（理由は HANDOFF 18「保存した後の移り先」） |
+| 保存した後の移り先 | 追加したら一覧、編集したら詳細へ。どちらも履歴を置き換える（「戻る」でフォームに戻らない） | `src/pages/RecipeForm/`（理由は [decisions/ai-import.md](../decisions/ai-import.md)「保存した後の移り先」） |
 | フォームのキャンセル | 「‹ キャンセル」で、追加なら一覧、編集なら詳細へ戻る（保存しない） | `src/pages/RecipeForm/` |
-| スクロールの位置 | 画面を移ったら一番上から見せる。「戻る」（iPhone の左端からのスワイプも）のときは、元の位置をブラウザに任せる | `src/components/layout/MainLayout/`（HANDOFF 18「保存した後は一番上から見せる」） |
+| スクロールの位置 | 画面を移ったら一番上から見せる。「戻る」（iPhone の左端からのスワイプも）のときは、元の位置をブラウザに任せる | `src/components/layout/MainLayout/`（[decisions/ai-import.md](../decisions/ai-import.md)「保存した後は一番上から見せる」） |
 | 詳細の「戻る」 | 来た画面（一覧・リクエスト・作ったご飯）へ戻る | `src/pages/RecipeDetail/` |
-| シークレットモード | オンのときは「リクエスト」のタブを出さない。`/todo` を直接開いても一覧へ移す。設定を読み終わるまではタブも画面も出さない（一瞬でも予定が見えないように） | `MainLayout`、`src/pages/Todo/`（HANDOFF 15「予定日の表示をユーザーごとに分ける」） |
+| シークレットモード | オンのときは「リクエスト」のタブを出さない。`/todo` を直接開いても一覧へ移す。設定を読み終わるまではタブも画面も出さない（一瞬でも予定が見えないように） | `MainLayout`、`src/pages/Todo/`（[decisions/secret-mode.md](../decisions/secret-mode.md)） |
 | レシピが見つからないとき | 詳細・編集で、消されたレシピなどを開くと「レシピ一覧へ」のリンクを出す | `src/pages/RecipeDetail/`、`src/pages/RecipeForm/` |

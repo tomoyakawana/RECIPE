@@ -31,4 +31,4 @@
 - AI で取り込んだ内容をフォームに入れられる（F-05）
 - **レシピを消す機能はまだない**（#13）
 
-**関わるもの**：DB 関数 `save_recipe`、Storage の `recipe-images`、`pages/RecipeForm/`、`components/common/TagSelector.tsx`、`api/recipes.ts`、`api/recipeImages.ts`（理由は HANDOFF 18「フォームの入力欄」「タグの選び方」「保存時のお知らせと重複確認」「保存した後の移り先」、写真は HANDOFF 25）
+**関わるもの**：DB 関数 `save_recipe`、Storage の `recipe-images`、`pages/RecipeForm/`、`components/common/TagSelector.tsx`、`api/recipes.ts`、`api/recipeImages.ts`（理由は [decisions/ai-import.md](../../decisions/ai-import.md)「フォームの入力欄」「タグの選び方」「保存時のお知らせと重複確認」「保存した後の移り先」、写真は [decisions/photos.md](../../decisions/photos.md)）

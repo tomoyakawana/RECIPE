@@ -48,4 +48,4 @@
 
 失敗したときは、下の段に「もう一度」を出す。
 
-**関わるもの**：Edge Function `suggest-menu`（`plan.ts` がルールの部分）、`components/common/MenuSuggestSheet.tsx`・`FloatingActions.tsx`・`icons.tsx`、`utils/suggestMenu.ts`（理由は HANDOFF 15「AI の献立提案」）
+**関わるもの**：Edge Function `suggest-menu`（`plan.ts` がルールの部分）、`components/common/MenuSuggestSheet.tsx`・`FloatingActions.tsx`・`icons.tsx`、`utils/suggestMenu.ts`（理由は [decisions/menu-suggestion.md](../../decisions/menu-suggestion.md)）

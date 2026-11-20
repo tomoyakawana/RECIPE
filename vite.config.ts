@@ -10,7 +10,7 @@ const { version } = JSON.parse(readFileSync(new URL('./package.json', import.met
 // https://vite.dev/config/
 export default defineConfig({
   // ビルドのときに、アプリのコードの __APP_VERSION__ を package.json のバージョンに置き換える
-  // （バージョンを書くのは package.json の1か所だけにする。上げるのは本番に出すとき：HANDOFF 23 章）
+  // （バージョンを書くのは package.json の1か所だけにする。上げるのは本番に出すとき：docs/decisions/dev-process.md）
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },

@@ -16,4 +16,4 @@
 - 設定を読み終わるまでは、タブも画面も出さない（一瞬でも予定が見えないように）
 - **隠すのは画面だけ**。データそのものは2人とも読める（買い物リストの材料から料理が推測できる可能性は受け入れている）
 
-**関わるもの**：`user_settings`、`todo_items.requested_by`、DB 関数 `request_recipe`、`pages/Settings/`、`components/layout/MainLayout/`、`api/settings.ts`（理由は HANDOFF 15「予定日の表示をユーザーごとに分ける」）
+**関わるもの**：`user_settings`、`todo_items.requested_by`、DB 関数 `request_recipe`、`pages/Settings/`、`components/layout/MainLayout/`、`api/settings.ts`（理由は [decisions/secret-mode.md](../../decisions/secret-mode.md)）

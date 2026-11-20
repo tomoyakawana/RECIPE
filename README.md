@@ -65,7 +65,7 @@ flowchart LR
 - **秘密情報はサーバー側だけ**：Gemini の API キーは Edge Function の Secrets にだけ置き、フロントにも git にも入れない
 - **DB の権限**：すべてのテーブルに RLS を有効にし、GRANT もテーブルごとに必要な分だけ付けている。DB 関数は実行できるロールを絞っている
 - **新規登録は閉じている**：アカウントは夫婦の2つだけ
-- 本番に出す前のチェックリストを用意して、機能を足すたびに確認している（[HANDOFF.md](HANDOFF.md) の 16）
+- 本番に出す前のチェックリストを用意して、機能を足すたびに確認している（[docs/decisions/security-checklist.md](docs/decisions/security-checklist.md)）
 
 ### 費用0円で運用する
 - 料金・無料枠は変わるので、決めるときは公式のページで確かめて記録している
@@ -83,8 +83,8 @@ flowchart LR
 1. やることは **GitHub の Issue** で管理する。目的ごとに親の Issue を作って作業を子としてぶら下げ、優先度のラベルとマイルストーン（バージョン）を付ける
 2. **develop から Issue ごとのブランチ**を切って実装する
 3. **develop への PR**：CI が通り、ローカルとプレビュー（iPhone の実機）で確認してからマージする
-4. **リリース**：develop → main の PR で本番に出す。バージョンを上げ、タグと [GitHub の Release](https://github.com/tomoyakawana/RECIPE/releases) を作る。手順は [HANDOFF.md](HANDOFF.md) の 23
-5. **決めたことは理由と一緒に記録する**（[HANDOFF.md](HANDOFF.md)）。後から「なぜこうしたか」をたどれるようにしている
+4. **リリース**：develop → main の PR で本番に出す。バージョンを上げ、タグと [GitHub の Release](https://github.com/tomoyakawana/RECIPE/releases) を作る。手順は [docs/decisions/dev-process.md](docs/decisions/dev-process.md)
+5. **決めたことは理由と一緒に記録する**（[HANDOFF.md](HANDOFF.md) と [docs/decisions/](docs/decisions/)）。後から「なぜこうしたか」をたどれるようにしている
 
 AI コーディングアシスタント（Claude Code）と一緒に開発しています。設計と判断は自分で行い、急いで使えるようにしたい機能は実装を任せ、身につけたい部分は自分で書いてレビューしてもらっています。Claude 向けの作業ルールは [CLAUDE.md](CLAUDE.md) にあります。
 
@@ -105,6 +105,7 @@ supabase/
 docs/
   external/     外部設計（機能・画面）
   internal/     内部設計（DB）
+  decisions/    設計判断とその理由（テーマごと）
   SETUP.md      開発環境の構築手順
 ```
 
@@ -116,6 +117,7 @@ docs/
 | [docs/external/DESIGN.md](docs/external/DESIGN.md) | 設計書（画面の一覧と遷移） |
 | [docs/internal/DATABASE.md](docs/internal/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
 | [docs/SETUP.md](docs/SETUP.md) | 開発環境の構築手順（ローカルの Supabase、iPhone からの確認、困ったとき） |
-| [HANDOFF.md](HANDOFF.md) | 設計判断とその理由、本番反映の記録、リリースの手順 |
+| [HANDOFF.md](HANDOFF.md) | 前提（何を作るか・絶対条件・技術選定）と、設計判断の目次 |
+| [docs/decisions/](docs/decisions/) | 設計判断とその理由（テーマごと）、本番反映の記録、リリースの手順 |
 | [REQUIREMENTS.md](REQUIREMENTS.md) | 動作環境・外部サービスの要件の検討メモ |
 | [CLAUDE.md](CLAUDE.md) | AI コーディングアシスタント向けの作業ルール |
