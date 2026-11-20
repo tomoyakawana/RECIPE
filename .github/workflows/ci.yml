@@ -47,3 +47,7 @@ jobs:
       - name: parse-recipe
         working-directory: supabase/functions/parse-recipe
         run: deno check index.ts
+      - name: suggest-menu
+        working-directory: supabase/functions/suggest-menu
+        run: deno check index.ts
+

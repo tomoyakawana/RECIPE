@@ -5,6 +5,7 @@ import DatePill from '../../components/common/DatePill';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import MonthCalendar from '../../components/common/MonthCalendar';
+import MenuSuggestSheet from '../../components/common/MenuSuggestSheet';
 import { useRecipes } from '../../hooks/useRecipes';
 import { useSecretMode } from '../../hooks/useSettings';
 import { useMarkCooked, useRemoveTodo, useSetPlannedOn, useTodoItems } from '../../hooks/useTodo';
@@ -15,6 +16,7 @@ import type { TodoItem } from '../../types/todo';
 import { addDays, fmtYmd, todayYmd } from '../../utils/date';
 import { pickRecipeStyle } from '../../utils/recipeStyle';
 import RecipePhoto from '../../components/common/RecipePhoto';
+import FloatingActions from '../../components/common/FloatingActions';
 
 /* ---- リクエストの 1件 ---- */
 type CardProps = {
@@ -78,6 +80,7 @@ const TodoPage = () => {
   const secretMode = useSecretMode();
   const [selected, setSelected] = useState<string>();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [menuOpen, setMenuOpen]     = useState(false);
   const [notice, setNotice]     = useState('');
 
   // シークレットモードのときは、URL を直接開いても見せない（フックを呼び終えた後で判定する）
@@ -163,16 +166,9 @@ const TodoPage = () => {
         {rows.length > 0 ? `${rows.length}品。日付を決めて、作ったら「作った！」` : '作りたいもの・食べたいものを入れておこう'}
       </p>
 
-      <div className="md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:items-start md:gap-6">
+      <div className="pb-16 md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:items-start md:gap-6">
         <div className="mb-5 md:sticky md:top-4 md:mb-0">
           <MonthCalendar today={today} marks={marks} selected={selected} onSelect={handleSelect} />
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="mt-3 min-h-11 w-full rounded-full bg-brand/10 px-4 text-sm font-bold text-brand"
-          >
-            ＋ 予定を入れる
-          </button>
         </div>
 
         <div>
@@ -222,8 +218,10 @@ const TodoPage = () => {
           )}
         </div>
       </div>
+      <FloatingActions onPlan={() => setPickerOpen(true)} onSuggest={() => setMenuOpen(true)} />
       {/* シートは画面のいちばん外側に置く。PC の幅ではカレンダーの列が sticky になり、その中に置くと、右の列のカードより前に出られないため */}
       {pickerOpen && <AddPlanSheet onClose={() => setPickerOpen(false)} initialDate={selected && selected >= today ? selected : today} requests={rows} recipes={recipes} />}
+      {menuOpen && <MenuSuggestSheet onClose={() => setMenuOpen(false)} recipes={recipes} />}
     </>
   );
 };
