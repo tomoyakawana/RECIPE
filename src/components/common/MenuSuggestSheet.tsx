@@ -110,7 +110,8 @@ const MenuSuggestSheet = ({ onClose, recipes }: Props) => {
   useEffect(() => {
     // 返事が届く前にシートが閉じられたら、その返事は捨てる（閉じた後に画面を書き換えないように）
     let ignore = false;
-    suggestMenu().then(result => {
+    // 最初に開いたとき（round が 0）は保存した提案を使い、「別の案」のときだけ聞き直す
+    suggestMenu({ refresh: round > 0 }).then(result => {
       if (ignore) return;
       if (result.error !== undefined) setState({ status: 'error', message: result.error });
       else setState({ status: 'done', picks: result.picks, notice: result.notice });
