@@ -619,10 +619,10 @@ Supabase のような BaaS では、自前のサーバーのコードで守っ�
 ### 運用
 - [ ] **CI（GitHub Actions）が ✅** になっている（PR の画面、または Actions タブ）
 - [ ] マイグレーションはコミット済みのものだけを `db push` している
-- [ ] マイグレーションを足したら、[docs/DATABASE.md](docs/DATABASE.md) も直している
+- [ ] マイグレーションを足したら、[docs/internal/DATABASE.md](docs/internal/DATABASE.md) も直している
 - [ ] ダッシュボードや DBeaver でスキーマを直接変えていない
-- [ ] 画面を足したり、画面の移り方を変えたりしたら、[docs/DESIGN.md](docs/DESIGN.md) も直している
-- [ ] 機能を足したり、機能のルール・文言を変えたりしたら、[docs/FEATURES.md](docs/FEATURES.md) も直している
+- [ ] 画面を足したり、画面の移り方を変えたりしたら、[docs/external/DESIGN.md](docs/external/DESIGN.md) も直している
+- [ ] 機能を足したり、機能のルール・文言を変えたりしたら、[docs/external/features/](docs/external/features/) も直している（機能を足したら [FEATURES.md](docs/external/FEATURES.md) の一覧にも1行足す）
 
 ---
 
@@ -1031,7 +1031,7 @@ Issue #3 の「名前から `Mock` を外す」は、**改名ではなく、#4�
 
 ## 25. レシピの写真（#14、2026-11-07〜09）
 
-**写真は Supabase Storage の非公開バケット `recipe-images` に置き、DB（`recipes.image_path`）にはパスだけを入れる。** 定義は [docs/DATABASE.md](docs/DATABASE.md) の「Storage（写真）」。
+**写真は Supabase Storage の非公開バケット `recipe-images` に置き、DB（`recipes.image_path`）にはパスだけを入れる。** 定義は [docs/internal/DATABASE.md](docs/internal/DATABASE.md) の「Storage（写真）」。
 
 **無料枠（2026-11-07 に公式で確認。変わることがあるので、気になったら一次情報で確かめ直す）**：保存 1GB、egress 5GB／月（DB・Auth などと共通。キャッシュから返した分は別に 5GB）、1ファイル 50MB。画像の変換（Image Transformations）は Free では使えない。超えても課金はされず、通知と猶予のあとに制限がかかる。
 

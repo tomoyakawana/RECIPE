@@ -1,10 +1,10 @@
 # 設計書
 
-「なに食べたい？」の**今の作り**をまとめたもの。「なぜそうしたか・いつ決めたか」は [HANDOFF.md](../HANDOFF.md) に書き、ここからリンクする（同じ説明を二重に書かない）。
+「なに食べたい？」の**今の作り**をまとめたもの。「なぜそうしたか・いつ決めたか」は [HANDOFF.md](../../HANDOFF.md) に書き、ここからリンクする（同じ説明を二重に書かない）。
 
 画面・DB・処理を変えたら、ここも一緒に直す。
 
-> 機能ごとのルールは [FEATURES.md](FEATURES.md)、DB（ER 図・テーブル定義・DB 関数・権限）は [DATABASE.md](DATABASE.md) にまとめた。
+> 機能ごとのルールは [FEATURES.md](FEATURES.md)、DB（ER 図・テーブル定義・DB 関数・権限）は [DATABASE.md](../internal/DATABASE.md) にまとめた。
 
 ---
 

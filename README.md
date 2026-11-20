@@ -13,7 +13,7 @@
 
 | レシピ一覧 | レシピ詳細 | AI で取り込む | リクエスト |
 |:---:|:---:|:---:|:---:|
-| <img src="docs/images/01-recipe-list.png" width="200" alt="レシピ一覧"> | <img src="docs/images/02-recipe-detail.png" width="200" alt="レシピ詳細"> | <img src="docs/images/03-recipe-add.png" width="200" alt="レシピの追加（URL から AI で取り込む）"> | <img src="docs/images/04-request.png" width="200" alt="リクエスト（カレンダー）"> |
+| <img src="docs/external/images/01-recipe-list.png" width="200" alt="レシピ一覧"> | <img src="docs/external/images/02-recipe-detail.png" width="200" alt="レシピ詳細"> | <img src="docs/external/images/03-recipe-add.png" width="200" alt="レシピの追加（URL から AI で取り込む）"> | <img src="docs/external/images/04-request.png" width="200" alt="リクエスト（カレンダー）"> |
 
 ※ スクリーンショットは、開発用のダミーデータで撮影したものです。
 
@@ -99,19 +99,22 @@ src/
   hooks/ utils/ types/
 supabase/
   migrations/   DB のマイグレーション
-  functions/    Edge Function（AI の読み取り：parse-recipe）
+  functions/    Edge Function（AI の読み取り：parse-recipe、献立の提案：suggest-menu）
   tests/        SQL のテスト
   seed.sql      ローカル用のダミーデータ
-docs/           設計書・開発環境の構築手順
+docs/
+  external/     外部設計（機能・画面）
+  internal/     内部設計（DB）
+  SETUP.md      開発環境の構築手順
 ```
 
 ## ドキュメント
 
 | ファイル | 中身 |
 |---|---|
-| [docs/FEATURES.md](docs/FEATURES.md) | 機能定義書（機能ごとの入力・ルール・エラー） |
-| [docs/DESIGN.md](docs/DESIGN.md) | 設計書（画面の一覧と遷移） |
-| [docs/DATABASE.md](docs/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
+| [docs/external/FEATURES.md](docs/external/FEATURES.md) | 機能定義書（機能の一覧と共通のルール。各機能は `features/` に1機能1ファイル） |
+| [docs/external/DESIGN.md](docs/external/DESIGN.md) | 設計書（画面の一覧と遷移） |
+| [docs/internal/DATABASE.md](docs/internal/DATABASE.md) | DB 設計書（ER 図・テーブル定義・DB 関数・権限） |
 | [docs/SETUP.md](docs/SETUP.md) | 開発環境の構築手順（ローカルの Supabase、iPhone からの確認、困ったとき） |
 | [HANDOFF.md](HANDOFF.md) | 設計判断とその理由、本番反映の記録、リリースの手順 |
 | [REQUIREMENTS.md](REQUIREMENTS.md) | 動作環境・外部サービスの要件の検討メモ |
