@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CalendarIcon, PlusIcon, SparkleIcon } from './icons';
 
 type Props = {
   // 「予定を入れる」を押したとき（予定を入れるシートを開く）
@@ -6,27 +7,6 @@ type Props = {
   // 「献立を提案」を押したとき（献立の提案のシートを開く）
   onSuggest: () => void;
 };
-
-// 線で描くアイコン。色は文字色（currentColor）に合わせるので、text-white などで変えられる
-const PlusIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
-const CalendarIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3.5" y="5" width="17" height="15" rx="3" />
-    <path d="M8 3v4M16 3v4M3.5 10h17M12 13v4M10 15h4" />
-  </svg>
-);
-
-const SparkleIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
-    <path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z" />
-    <path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" />
-  </svg>
-);
 
 /**
  * 右下に浮かぶ「＋」。押すと「予定を入れる」「献立を提案」の2つが上に開く（スピードダイヤル）
