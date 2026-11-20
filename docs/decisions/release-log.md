@@ -63,6 +63,13 @@
 - 本番の secrets には `PARSE_RECIPE_MODEL` を**入れていない**。既定のモデル（`gemini-3.5-flash-lite`）で、動きは前と同じ
 - 画面・DB の変更はなし
 
+## 2026-11-20：PR #74（#11：AI の献立提案）— Edge Function だけ先に本番へ
+- **main にはまだ載せていない**（v1.3 にまとめる）。本番の画面にはボタンがないので、リリースまで呼ばれない
+- 手順：#74 を develop にマージ → CI ✅ を確認 → develop の最新（`8d57cdc`）で `npx supabase functions deploy suggest-menu --use-api`（川名さん）→ `functions list` で **suggest-menu 版 1**（07:07 UTC）、`verify_jwt: true`
+- 本番の secrets には `SUGGEST_MENU_MODEL` を**入れていない**。既定のモデル（`gemini-3.5-flash-lite`）で動く。`GEMINI_API_KEY` は parse-recipe と共通
+- 本番での動作確認は、v1.3 のリリースの後（画面がないため）
+- 画面・DB の変更はなし
+
 ## 受け入れたリスク
 | 項目 | 内容 | 判断 |
 |---|---|---|
