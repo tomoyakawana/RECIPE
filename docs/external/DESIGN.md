@@ -16,7 +16,7 @@
 |---|---|---|---|
 | ログイン | `/login` | `src/pages/Login/` | メールアドレスとパスワードでログイン。新規登録はない |
 | レシピ一覧 | `/` | `src/pages/RecipeList/` | 検索、絞り込み（タグ・★ お気に入り・⏱ 20分以内）。レシピの追加へ進む |
-| レシピ詳細 | `/recipes/:id` | `src/pages/RecipeDetail/` | 材料・作り方・ひとことメモ。お気に入り、リクエストに追加、編集へ進む |
+| レシピ詳細 | `/recipes/:id` | `src/pages/RecipeDetail/` | 材料・作り方・ひとことメモ。お気に入り、リクエストに追加、編集へ進む、削除 |
 | レシピの追加 | `/recipes/new` | `src/pages/RecipeForm/` | 入力して保存。AI で取り込む（URL・写真・テキスト） |
 | レシピの編集 | `/recipes/:id/edit` | `src/pages/RecipeForm/` | 追加と同じ画面。中身を入れた状態で開く |
 | リクエスト | `/todo` | `src/pages/Todo/` | 食べたい料理の一覧。カレンダーで作る日を決め、作ったら「作った！」 |
@@ -49,6 +49,7 @@ flowchart TD
   List -->|＋ 追加| New
   New -->|保存・キャンセル| List
   Detail -->|編集| Edit
+  Detail -->|削除| List
   Edit -->|保存・キャンセル| Detail
   Todo -->|レシピを押す| Detail
   History -->|レシピを押す| Detail
@@ -66,5 +67,6 @@ flowchart TD
 | フォームのキャンセル | 「‹ キャンセル」で、追加なら一覧、編集なら詳細へ戻る（保存しない） | `src/pages/RecipeForm/` |
 | スクロールの位置 | 画面を移ったら一番上から見せる。「戻る」（iPhone の左端からのスワイプも）のときは、元の位置をブラウザに任せる | `src/components/layout/MainLayout/`（[decisions/ai-import.md](../decisions/ai-import.md)「保存した後は一番上から見せる」） |
 | 詳細の「戻る」 | 来た画面（一覧・リクエスト・作ったご飯）へ戻る | `src/pages/RecipeDetail/` |
+| 削除した後の移り先 | 一覧へ。履歴を置き換える（「戻る」で削除したレシピの詳細に戻らない） | `src/pages/RecipeDetail/` |
 | シークレットモード | オンのときは「リクエスト」のタブを出さない。`/todo` を直接開いても一覧へ移す。設定を読み終わるまではタブも画面も出さない（一瞬でも予定が見えないように） | `MainLayout`、`src/pages/Todo/`（[decisions/secret-mode.md](../decisions/secret-mode.md)） |
 | レシピが見つからないとき | 詳細・編集で、消されたレシピなどを開くと「レシピ一覧へ」のリンクを出す | `src/pages/RecipeDetail/`、`src/pages/RecipeForm/` |
