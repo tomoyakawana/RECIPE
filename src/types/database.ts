@@ -276,6 +276,7 @@ export type Database = {
     }
     Functions: {
       add_todo_ingredients_to_shopping: { Args: never; Returns: number }
+      delete_recipe: { Args: { p_recipe_id: string }; Returns: undefined }
       mark_cooked: {
         Args: { p_todo_id: string }
         Returns: {

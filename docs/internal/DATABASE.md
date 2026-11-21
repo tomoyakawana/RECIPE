@@ -1,8 +1,8 @@
 # DB 設計書（テーブル定義）
 
-「なに食べたい？」の DB（Supabase の PostgreSQL）の**今の定義**をまとめたもの。正は [supabase/migrations/](../supabase/migrations/) のマイグレーションで、ここはそれを読みやすく書き起こしたもの。
+「なに食べたい？」の DB（Supabase の PostgreSQL）の**今の定義**をまとめたもの。正は [supabase/migrations/](../../supabase/migrations/) のマイグレーションで、ここはそれを読みやすく書き起こしたもの。
 
-「なぜそうしたか」は [HANDOFF.md](../HANDOFF.md) の 12（命名規則）・13（スキーマの判断・権限）・22（DB とのつなぎ方）を参照。
+「なぜそうしたか」は [decisions/database.md](../decisions/database.md)（命名規則・スキーマの判断・権限・DB とのつなぎ方）を参照。
 
 **マイグレーションを足したら、ここも一緒に直す。**
 
@@ -12,6 +12,7 @@
 | `20261018115231_revoke_unused_table_privileges.sql` | アプリで使わないテーブル権限（TRUNCATE など）を外す |
 | `20261024023439_add_requests_and_user_settings.sql` | 「食べたい！」の列と関数、ユーザーごとの設定（`user_settings`） |
 | `20261108233128_add_recipe_images.sql` | 写真のバケット（`recipe-images`）と権限、`save_recipe` に写真のパスを足す（#14） |
+| `20261120115825_delete_recipe.sql` | レシピを削除する `delete_recipe`、`request_recipe` で削除済みのレシピを受け付けないようにする（#13） |
 
 ---
 
@@ -229,7 +230,8 @@ erDiagram
 |---|---|---|
 | `save_recipe` | レシピの id（null なら追加）、料理名、調理時間、何人分、タグ、参考 URL、材料（jsonb の配列）、手順（text の配列）、写真のパス（省略すると null） → 保存したレシピの id | レシピの追加・編集。材料と手順は全部消して入れ直す。配列の順番がそのまま表示順になる。写真のパスも、編集のときは渡した値で置き換える（写真を残すときは今のパスを渡す）。削除済みのレシピを編集しようとしたらエラー。写真そのもの（Storage）には触らない |
 | `mark_cooked` | リクエストの id → 追加した `cook_logs` の行 | 「作った！」。リクエストから外して、作った記録を足す。記録する日は、予定日が今日以前ならその予定日（押し忘れ対策）、未来か未定なら今日 |
-| `request_recipe` | レシピの id → 印を付けた（または追加した）`todo_items` の行 | 「🙋 食べたい！」。同じレシピが日付未定ですでにあれば、増やさずにその1件に印を付ける。なければ印付きで追加する |
+| `request_recipe` | レシピの id → 印を付けた（または追加した）`todo_items` の行 | 「🙋 食べたい！」。同じレシピが日付未定ですでにあれば、増やさずにその1件に印を付ける。なければ印付きで追加する。削除済みのレシピならエラー（レシピの行を `for share` で押さえてから確かめるので、同時に削除されてもすれ違わない） |
+| `delete_recipe` | レシピの id → なし | レシピの削除（論理削除）。`deleted_at` に今の日時を入れ、そのレシピのリクエスト（`todo_items`）を全部消す。見つからない・もう削除済みならエラー。作ったご飯の記録・買い物リストの品物・写真（Storage）には触らない |
 | `add_todo_ingredients_to_shopping` | なし → 追加した件数 | リクエストに入っているレシピの材料を買い物リストに足す。同じレシピが何日かに入っていても1回分。同じレシピの同じ材料が、まだ買っていない状態であれば重ねて入れない |
 | `set_updated_at` | トリガー専用 | `updated_at` を今の時刻にする。`recipes`・`shared_notes`・`user_settings` の更新前に動く |
 
@@ -282,4 +284,4 @@ Storage のファイルは `storage.objects` テーブルの1行として管理�
 | 読む・上げる・消す（`recipe-images` の分だけ） | なし | できる |
 | 上書き（update） | なし | なし（差し替えは、新しく上げて古いものを消す） |
 
-テストは [supabase/tests/](../supabase/tests/)（`04_privileges.sql` で権限、`06_recipe_images.sql` で写真の権限と `save_recipe` の写真のパス、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [HANDOFF.md](../HANDOFF.md) の 16。
+テストは [supabase/tests/](../../supabase/tests/)（`04_privileges.sql` で権限、`06_recipe_images.sql` で写真の権限と `save_recipe` の写真のパス、`07_delete_recipe.sql` でレシピの削除、ほかのファイルで関数の動き）。新しいテーブルや関数を足すときのチェックは [decisions/security-checklist.md](../decisions/security-checklist.md)。

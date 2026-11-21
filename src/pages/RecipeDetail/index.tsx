@@ -3,9 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router';
 import LoadError from '../../components/common/LoadError';
 import Loading from '../../components/common/Loading';
 import { useAuth } from '../../hooks/useAuth';
-import { useCookedDates, useRecipe, useToggleFavorite, useUpdateNote } from '../../hooks/useRecipes';
+import { useCookedDates, useDeleteRecipe, useRecipe, useToggleFavorite, useUpdateNote } from '../../hooks/useRecipes';
 import { useSecretMode } from '../../hooks/useSettings';
 import { useAddTodo, useRequestRecipe, useTodoItems } from '../../hooks/useTodo';
+import { useToast } from '../../hooks/useToast';
 import { fmtYmd } from '../../utils/date';
 import RecipePhoto from '../../components/common/RecipePhoto';
 
@@ -86,6 +87,8 @@ const RecipeDetailPage = () => {
   const { data: todo = [] } = useTodoItems();
   const addToTodo      = useAddTodo();
   const requestRecipe  = useRequestRecipe();
+  const deleteRecipe   = useDeleteRecipe();
+  const toast = useToast();
   const myId = useAuth().session?.user.id;
   const secretMode = useSecretMode();
 
@@ -105,6 +108,21 @@ const RecipeDetailPage = () => {
   // シークレットモード：自分が「食べたい！」したかだけを見る
   const requested = todo.some(t => t.recipeId === recipe.id && t.requestedBy === myId);
   const done      = secretMode ? requested : inTodo;
+
+  // 削除：確認してから消し、一覧へ戻る
+  const handleDelete = async () => {
+    if (deleteRecipe.isPending) return;
+    if (!window.confirm(`「${recipe.title}」を削除しますか？\n作ったご飯の記録は残ります。リクエストからは外れます。`)) return;
+
+    try {
+      await deleteRecipe.mutateAsync(recipe.id);
+      // replace：戻るボタンで、削除したレシピの詳細に戻らないように
+      navigate('/', { replace: true });
+      toast.success('レシピを削除しました');
+    } catch {
+      // 失敗のトーストは useDeleteRecipe が出す。画面はそのまま
+    }
+  };
 
   return (
     <article>
@@ -131,8 +149,21 @@ const RecipeDetailPage = () => {
         </button>
       </div>
 
-      <div className="flex items-start gap-2">
+      {/* レシピ名と編集は、スクロールしても画面の上に貼り付ける（下の方を見ていても、何のレシピか分かり、すぐ直せるように）
+          背景を付けて、下を流れる文字が透けないようにする。横は本文の余白の分だけ広げて、画面の端まで塗る
+          z-10：写真の上の戻る・お気に入りボタン（absolute）より前に出す */}
+      <div className="sticky top-0 z-10 -mx-4 flex items-start gap-2 bg-cream/90 px-4 py-2 backdrop-blur md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
         <h1 className="flex-1 text-2xl font-extrabold tracking-tight">{recipe.title}</h1>
+        {/* 削除は、編集の横に控えめに置く（押したら確認を出す） */}
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleteRecipe.isPending}
+          aria-label="このレシピを削除"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-sm shadow-sm shadow-stone-900/5 disabled:opacity-50"
+        >
+          🗑️
+        </button>
         <Link
           to={`/recipes/${recipe.id}/edit`}
           className="flex min-h-9 shrink-0 items-center rounded-full bg-white px-3 text-sm text-stone-600 shadow-sm shadow-stone-900/5"
@@ -207,13 +238,15 @@ const RecipeDetailPage = () => {
         </section>
       </div>
 
-      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる） */}
-      <div className="sticky bottom-24 md:static">
+      {/* リクエストのボタン（iPhone ではタブバーの上に浮かせる）
+          後ろに下から cream のグラデーションを敷き、スクロール中の文字がボタンに重ならないようにする
+          帯はタップを素通し（pointer-events-none）にして、下の文字やリンクを押せるようにする。ボタンだけ押せるように戻す */}
+      <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-linear-to-t from-cream from-60% to-transparent pt-6 pb-4 md:static md:bg-none md:p-0">
         <button
           type="button"
           disabled={done || addToTodo.isPending || requestRecipe.isPending}
           onClick={() => (secretMode ? requestRecipe.mutate(recipe.id) : addToTodo.mutate({ recipeId: recipe.id, plannedOn: undefined }))}
-          className="min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
+          className="pointer-events-auto min-h-13 w-full rounded-full bg-brand font-bold text-white shadow-lg shadow-brand/30 disabled:bg-stone-200 disabled:text-stone-500 disabled:shadow-none md:max-w-sm"
         >
           {secretMode
             ? (done ? '✓ リクエスト済み' : '🙋 食べたい！')

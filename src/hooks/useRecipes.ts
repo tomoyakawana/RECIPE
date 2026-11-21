@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchCookedDates, fetchRecipes, saveRecipe, updateFavorite, updateNote } from '../api/recipes';
+import { deleteRecipe, fetchCookedDates, fetchRecipes, saveRecipe, updateFavorite, updateNote } from '../api/recipes';
 import { fetchImageUrls, removeRecipeImage, toSizedPath, uploadRecipeImage, type ImageSize } from '../api/recipeImages';
 import type { Recipe, RecipeInput } from '../types/recipe';
 import { dbErrorMessage } from '../utils/dbError';
+import { historyKeys } from './useHistory';
+import { todoKeys } from './useTodo';
 import { useToast } from './useToast';
 
 /**
@@ -146,6 +148,27 @@ export const useUpdateNote = () => {
   return useMutation({
     mutationFn: ({ recipeId, note }: { recipeId: string; note: string }) => updateNote(recipeId, note),
     onSuccess : () => queryClient.invalidateQueries({ queryKey: recipeKeys.all }),
+    onError   : error => toast.error(dbErrorMessage(error)),
+  });
+};
+
+/**
+ * レシピの削除。リクエストから外れ、作ったご飯の表示も変わるので、まとめて読み直す
+ * 読み直しは待たない（onSuccess で Promise を返さない）。
+ * 待つと、読み直しが先に終わった瞬間、開いている詳細画面が「レシピが見つかりません」に変わってしまうため。
+ * 先に一覧へ移ってもらい、読み直しはその後ろで進める
+ */
+export const useDeleteRecipe = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: deleteRecipe,
+    onSuccess : () => {
+      queryClient.invalidateQueries({ queryKey: recipeKeys.all });
+      queryClient.invalidateQueries({ queryKey: todoKeys.all });
+      queryClient.invalidateQueries({ queryKey: historyKeys.all });
+    },
     onError   : error => toast.error(dbErrorMessage(error)),
   });
 };

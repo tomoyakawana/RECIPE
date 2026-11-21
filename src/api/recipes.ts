@@ -126,3 +126,13 @@ export const fetchCookedDates = async (recipeId: string): Promise<string[]> => {
   if (error) throw error;
   return data.map(l => l.cooked_on);
 };
+
+/**
+ * レシピを削除する（論理削除。行は消さずに deleted_at を入れる）
+ * DB 関数 delete_recipe が、削除とリクエストから外すのを1トランザクションでやる
+ * 作ったご飯の記録・買い物リストの品物・写真は残す
+ */
+export const deleteRecipe = async (recipeId: string): Promise<void> => {
+  const { error } = await supabase.rpc('delete_recipe', { p_recipe_id: recipeId });
+  if (error) throw error;
+};
